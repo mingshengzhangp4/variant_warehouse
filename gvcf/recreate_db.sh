@@ -18,7 +18,7 @@ create array GVCF_DATA
 >
 [
   chromosome_id =0:*,1,0, 
-  sample_id     =0:*,100,0,
+  sample_id     =0:*,50,0,
   start         =0:*,10000000,0,
   end           =0:*,10000000,0
 ];
@@ -32,6 +32,6 @@ create array GVCF_CHROMOSOME
 create array GVCF_SAMPLE
 < sample :string >
 [
-  sample_id =0:*,100,0
+  sample_id =0:*,50,0
 ];"
 

@@ -2,7 +2,7 @@
 
 RIND="1"
 NUM_ATTRIBUTES=10
-LINES_PER_CHUNK=100000
+LINES_PER_CHUNK=10000
 DATESTRING="+%Y_%m_%d_%H_%M_%S_%N"
 
 function log()
@@ -77,7 +77,7 @@ iquery -anq "create array GVCF_LOAD_BUF_$RIND
  a8:string NULL DEFAULT null,
  a9:string NULL DEFAULT null,
  error:string NULL DEFAULT null> 
-[source_instance_id=0:*,1,0,chunk_no=0:*,1,0,line_no=0:*,100000,0]" > /dev/null 2>&1
+[source_instance_id=0:*,1,0,chunk_no=0:*,1,0,line_no=0:*,$LINES_PER_CHUNK,0]" > /dev/null 2>&1
 iquery -n -aq "store(parse(split('$fifo_path', 'lines_per_chunk=$LINES_PER_CHUNK'), 'num_attributes=$NUM_ATTRIBUTES', 'chunk_size=$LINES_PER_CHUNK'), GVCF_LOAD_BUF_$RIND)" > /dev/null 2>&1
 rm -rf $fifo_path
 iquery -anq "
