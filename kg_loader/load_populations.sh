@@ -11,7 +11,8 @@ if [ ! -f $FILE ] ; then
 fi
 NUM_SAMPLES=`iquery -otsv -aq "op_count(KG_SAMPLE)" | tail -n 1`
 if [ -z $NUM_SAMPLES -o $NUM_SAMPLES -ne 2504 ] ; then
- echo "Didn't find the expected 2504 samples. KTHXBYE."
+ echo "Didn't find the expected 2504 samples."
+ echo "Make sure you run recreate_db.sh and load_file.sh <file> to populate the database first."
  exit 1;
 fi
 iquery -anq "remove(KG_POPULATION)" > /dev/null 2>&1
