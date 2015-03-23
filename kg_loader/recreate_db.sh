@@ -6,13 +6,11 @@ iquery --ignore-errors -aq "
 remove(KG_SAMPLE);
 remove(KG_VARIANT);
 remove(KG_GENOTYPE);
-remove(KG_VARIANT_POSITION_MASK);
 remove(KG_CHROMOSOME);
 
 create array KG_SAMPLE
 < sample :string >
 [ sample_id ];               --system will pick chunk size of 1M by default
-
 
 create array KG_CHROMOSOME
 < chromosome: string >
