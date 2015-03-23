@@ -2,42 +2,44 @@
 
 #This is created specifically for 1000G files and suffers from some complexity. 
 #Here's an example difficult case from 1000G and how it's handled:
-#Chrom	Pos		ID		ref	alt	sample1	sample2...	
-#2	206959388	.		T	TACAC	0|0	1|0
-#2	206959388	.		T	TACACAC	...	...
-#2	206959388	.		TAC	TACAC,T	...	...
-#2	206959388	rs146640041	TACACAC	T	...	...
+#Chrom	Pos		      ID		       ref      alt        sample1  sample2...	
+#2      206959388	  .            T        TACAC      0|0      1|0
+#2      206959388	  .		         T        TACACAC    ...      ...
+#2      206959388   .            TAC      TACAC,T    ...      ...
+#2      206959388   rs146640041  TACACAC  T          ...      ...
 
+#Those are variant pos,id,ref,alt fields from the actual chromosome 2 file.
 #This looks like an error, but terminating in the middle of a long load is not
 #very friendly. Silently filtering data out may also be looked down upon; so 
-#our script proceeds with a semi-reasonable structure.
+#our script proceeds with a semi-reasonable structure. We'll load as follows:
 
 #VARIANT array in DB (omitting chrom_id dimension and some attributes):
-#start		end		alt_no	ref	alt
-#206959388	206959390	1	TAC	T	
-#206959388	206959392	1	T	TACAC
-#206959388	206959392	2	TAC	TACAC
-#206959388	206959394	1	TACACAC	T
-#206959388	206959394	2	T	TACACAC
+#start      end         alt_id  ref      alt
+#206959388  206959390   1       TAC      T	
+#206959388  206959392   1       T        TACAC
+#206959388  206959392   2       TAC      TACAC
+#206959388  206959394   1       TACACAC  T
+#206959388  206959394   2       T        TACACAC
 
 #GENOTYPE array in DB (omitting chrom_id):
-#start		end		alt_no	sample_id	a1	a2	phase
+#start      end         alt_id  sample_id  a1     a2     phase
 #...
-#206959388	206959392	1	0		false	false	true
-#206959388	206959392	1	1		true	false	true
+#206959388  206959392   1       0          false  false  true
+#206959388  206959392   1       1          true   false  true
 #...
-#206959388	206959392	2	0		...
-#206959388	206959392	2	1		...
+#206959388  206959392   2       0	         ...
+#206959388  206959392   2       1          ...
 
+#This gives us the flexibility to filter or delete bad data after the load.
 #The complexity of this script is in decomposing the alt attribute, and 
-#assigning the alt_no coordinates to be shared by those two arrays above.
-#So a mask array is used as a temporary alt_no assigner.
+#assigning the alt_id coordinates to be shared by those two arrays above.
+#So a mask array is used to assign alt_id to both arrays consistently.
 
 #Overall process:
 # 1) parse the whole file into a temp matrix (millions of rows, 2504 +.. cols)
-# 2) fix up the chromosome and sample data
-# 3) peel off the first few columns (ref,alt...) into a separate buffer
-# 4) use buffer from (3) to create a mask of (chrom, start, end, alt_no)
+# 2) fix up KG_CHROMOSOME and KG_SAMPLE
+# 3) peel off the first few columns (ref,alt...) as attributes in a temp array
+# 4) use array from (3) to create a mask of (chrom, start, end, alt_id)
 # 5) use the mask from (4) to redim into KG_VARIANT
 # 6) use the mask from (4) to redim into KG_GENOTYPE
 
@@ -112,7 +114,7 @@ else
  cat  $FILE > $fifo_path &
 fi
 #Load the file
-iquery -anq "create array KG_LOAD_BUF <a:string null> [source_instance_id=0:*,1,0,chunk_no=0:*,1,0,line_no=0:*,$LINES_PER_CHUNK,0,attribute_no=0:$NUM_ATTRIBUTES,$((NUM_ATTRIBUTES+1)),0]" > /dev/null
+iquery -anq "create temp array KG_LOAD_BUF <a:string null> [source_instance_id=0:*,1,0,chunk_no=0:*,1,0,line_no=0:*,$LINES_PER_CHUNK,0,attribute_no=0:$NUM_ATTRIBUTES,$((NUM_ATTRIBUTES+1)),0]" > /dev/null
 iquery -anq "store(parse(split('$fifo_path', 'lines_per_chunk=$LINES_PER_CHUNK'), 'num_attributes=$NUM_ATTRIBUTES', 'chunk_size=$LINES_PER_CHUNK', 'split_on_dimension=1'), KG_LOAD_BUF)" > /dev/null
 rm -rf $fifo_path
 log "File ingested"
@@ -361,9 +363,9 @@ insert(
      VAR.line_no,            MASK.line_no
     ),
     reference, iif(ref is null, string(throw('invalid null ref')), ref),
-    alternate, iif(alt is null, string(throw('invalid null alt')), nth_csv(alt, alternate_id-1)),
-    ac,        double(nth_csv(keyed_value(info, 'AC', null), alternate_id -1)),
-    af,        double(nth_csv(keyed_value(info, 'AF', null), alternate_id -1)),
+    alternate, iif(alt is null, string(throw('invalid null alt')), nth_csv(alt, file_alt_number-1)),
+    ac,        double(nth_csv(keyed_value(info, 'AC', null), file_alt_number -1)),
+    af,        double(nth_csv(keyed_value(info, 'AF', null), file_alt_number -1)),
     chromosome_id, $CHROMOSOME_ID 
    ),
    build(<val:string> [i=0:0,1,0], 'invalid'),
@@ -391,8 +393,8 @@ insert(
     BUF.line_no,            MASK.line_no    
    ),
    sample_id,  attribute_no - $NUM_PRESAMPLE_ATTRIBUTES,
-   allele_1,   dcast(nth_tdv(a, 0, '|/'), int64(null)) = alternate_id,
-   allele_2,   dcast(nth_tdv(a, 1, '|/'), int64(null)) = alternate_id,
+   allele_1,   dcast(nth_tdv(a, 0, '|/'), int64(null)) = file_alt_number,
+   allele_2,   dcast(nth_tdv(a, 1, '|/'), int64(null)) = file_alt_number,
    phase,      iif( char_count(a, '|') > 0, true, iif(char_count(a, '/') > 0, false, null)),
    chromosome_id, $CHROMOSOME_ID
   ),
@@ -411,4 +413,3 @@ iquery -anq "remove(KG_LOAD_SAMPLE)" > /dev/null
 iquery -anq "remove(KG_LOAD_VARIANT_BUF)" > /dev/null
 iquery -anq "remove(KG_LOAD_REDIM_MASK)" > /dev/null
 log "Loaded $NUM_VARIANTS variants."
-
