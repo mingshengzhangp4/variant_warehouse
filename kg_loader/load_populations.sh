@@ -17,8 +17,9 @@ if [ -z $NUM_SAMPLES -o $NUM_SAMPLES -ne 2504 ] ; then
 fi
 iquery -anq "remove(KG_POPULATION)" > /dev/null 2>&1
 iquery -anq "remove(KG_SAMPLE_LOAD_BUF)" > /dev/null 2>&1
+set -e
 iquery -anq "create temp array KG_SAMPLE_LOAD_BUF <sample:string, population:string> [i]" > /dev/null 2>&1
-iquery -anq "load(KG_SAMPLE_LOAD_BUF, '/home/bio/github/vcf_tools/kg_loader/populations.tsv',0, 'tsv')" > /dev/null 2>&1
+iquery -anq "load(KG_SAMPLE_LOAD_BUF, '$FILE',0, 'tsv')" > /dev/null 2>&1
 iquery -anq "
 store(
  redimension(
@@ -37,3 +38,5 @@ store(
  ),
  KG_POPULATION
 )"
+iquery -aq "remove(KG_SAMPLE_LOAD_BUF)"
+iquery -aq "aggregate(KG_POPULATION, count(*) as population_entries)"
