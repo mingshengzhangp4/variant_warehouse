@@ -9,6 +9,9 @@ See: https://github.com/slottad/scidb-genotypes
 
 These scripts were created for SciDB 14.12 or newer. The larger the cluster - the faster these will run. The load_tools plugin is required for a vast majority of the examples. See: www.github.com/paradigm4/load_tools
 
+### gene_37: a simple set of gene locations
+A tsv and a loader script to create a very simple array of gene positions, used in some queries.
+
 ### kg_loader: for the 1000 Genomes Dataset
 Scripts to load the Phase 3 VCF data or data with very similar organization.
 [Click here](https://github.com/Paradigm4/vcf_tools/tree/master/kg_loader) for more information.
