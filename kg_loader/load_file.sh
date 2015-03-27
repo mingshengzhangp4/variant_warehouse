@@ -8,10 +8,7 @@
 #2      206959388   .            TAC      TACAC,T    ...      ...
 #2      206959388   rs146640041  TACACAC  T          ...      ...
 
-#Those are variant pos,id,ref,alt fields from the actual chromosome 2 file.
-#This looks like an error, but terminating in the middle of a long load is not
-#very friendly. Silently filtering data out may also be looked down upon; so 
-#our script proceeds with a semi-reasonable structure. We'll load as follows:
+#We'll load as follows:
 
 #VARIANT array in DB (omitting chrom_id dimension and some attributes):
 #start      end         alt_id  ref      alt
@@ -30,7 +27,6 @@
 #206959388  206959392   2       0          ...
 #206959388  206959392   2       1          ...
 
-#This gives us the flexibility to filter or delete bad data after the load.
 #The complexity of this script is in decomposing the alt attribute, and 
 #assigning the alt_id coordinates to be shared by those two arrays above.
 #So a mask array is used to assign alt_id to both arrays consistently.
