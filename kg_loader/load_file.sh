@@ -9,7 +9,6 @@
 #2      206959388   rs146640041  TACACAC  T          ...      ...
 
 #We'll load as follows:
-
 #VARIANT array in DB (omitting chrom_id dimension and some attributes):
 #start      end         alt_id  ref      alt
 #206959388  206959390   1       TAC      T	
@@ -33,7 +32,7 @@
 
 #Overall process:
 # 1) parse the whole file into a temp matrix (millions of rows, 2504 +.. cols)
-# 2) fix up KG_CHROMOSOME and KG_SAMPLE
+# 2) check that samples are aligned with KG_SAMPLE
 # 3) peel off the first few columns (ref,alt...) as attributes in a temp array
 # 4) use array from (3) to create a mask of (chrom, start, end, alt_id)
 # 5) use the mask from (4) to redim into KG_VARIANT
@@ -242,15 +241,6 @@ if [ $NUM_VARIANTS -le 0 ] ; then
 else
  log "Identified $NUM_VARIANTS variants in the file"
 fi
-NUM_UNIQUE_CHROMOSOMES=`iquery -ocsv -aq "op_count(uniq(sort(project(KG_LOAD_VARIANT_BUF, chrom))))" | tail -n 1`
-if [ $NUM_UNIQUE_CHROMOSOMES -ne 1 ] ; then
- error "File appears to have more than one chromosome, this script doesn't support that"
-fi
-CHROMOSOME=`iquery -ocsv -aq "uniq(sort(project(KG_LOAD_VARIANT_BUF, chrom)))" | tail -n 1`
-CHROMOSOME_EXISTS=`iquery -ocsv -aq "op_count(filter(KG_CHROMOSOME, chromosome=$CHROMOSOME))" | tail -n 1`
-if [ -z $CHROMOSOME -o -z $CHROMOSOME_EXISTS -o $CHROMOSOME_EXISTS -ne 0 ] ; then
- error "This chromosome is already in the KG_CHROMOSOME array"
-fi
 log "Creating var redimension mask"
 MAX_ALTERNATES=`iquery -otsv -aq "
 aggregate(
@@ -263,7 +253,7 @@ aggregate(
 )" | tail -n 1`
 iquery -anq "create temp array 
 KG_LOAD_REDIM_MASK
-<start:int64,end:int64,alternate_id:int64> 
+<chromosome_id:int64, start:int64, end:int64, alternate_id:int64> 
 [source_instance_id=0:*,1,0,chunk_no=0:*,1,0,line_no=0:*,$LINES_PER_CHUNK,0,file_alt_number=1:$MAX_ALTERNATES,$MAX_ALTERNATES,0]" > /dev/null
 iquery -anq "
 store(
@@ -272,7 +262,7 @@ store(
    apply(
     apply(
      cross_join(
-      KG_LOAD_VARIANT_BUF as VARS,
+      index_lookup(KG_LOAD_VARIANT_BUF as A, KG_CHROMOSOME, A.chrom, chromosome_id) as VARS,
       project(
        filter(
         cross_join(
@@ -302,7 +292,7 @@ store(
               pos)))
    ),
    <source_instance_id:int64, chunk_no:int64, line_no:int64, file_alt_number:int64> 
-   [start=0:*,10000000,0, end=0:*,10000000,0, alternate_id=1:20,20,0]
+   [chromosome_id=0:*,1,0, start=0:*,10000000,0, end=0:*,10000000,0, alternate_id=1:20,20,0]
   ),
   KG_LOAD_REDIM_MASK
  ),
@@ -316,34 +306,6 @@ fi
 if [ $NUM_SAMPLES_IN_DB -eq 0 ]; then
  log "Inserting samples from file"
  iquery -anq "store(KG_LOAD_SAMPLE, KG_SAMPLE)" > /dev/null
-fi
-log "Loading into KG_CHROMOSOME"
-CHROMOSOME_ID=`iquery -ocsv -aq "
-aggregate(
- apply(
-  insert(
-   redimension(
-    apply(
-     aggregate(
-      apply(
-       KG_CHROMOSOME,
-       cid, chromosome_id
-      ),
-      max(cid) as max_chrom_id
-     ),
-     chromosome,      $CHROMOSOME,
-     chromosome_id,   iif(max_chrom_id is null, 0, max_chrom_id + 1)
-    ),
-    KG_CHROMOSOME
-   ),
-   KG_CHROMOSOME
-  ),
-  acid, chromosome_id
- ),
- max(acid)
-)" | tail -n 1`
-if [ -z $CHROMOSOME_ID ]; then
- error "Chromosome insertion appears to have failed"
 fi
 log "Loading into KG_VARIANT"
 iquery -anq "
@@ -361,8 +323,7 @@ insert(
     reference, iif(ref is null, string(throw('invalid null ref')), ref),
     alternate, iif(alt is null, string(throw('invalid null alt')), nth_csv(alt, file_alt_number-1)),
     ac,        double(nth_csv(keyed_value(info, 'AC', null), file_alt_number -1)),
-    af,        double(nth_csv(keyed_value(info, 'AF', null), file_alt_number -1)),
-    chromosome_id, $CHROMOSOME_ID 
+    af,        double(nth_csv(keyed_value(info, 'AF', null), file_alt_number -1))
    ),
    build(<val:string> [i=0:0,1,0], 'invalid'),
    reference, 
@@ -391,8 +352,7 @@ insert(
    sample_id,  attribute_no - $NUM_PRESAMPLE_ATTRIBUTES,
    allele_1,   dcast(nth_tdv(a, 0, '|/'), int64(null)) = file_alt_number,
    allele_2,   dcast(nth_tdv(a, 1, '|/'), int64(null)) = file_alt_number,
-   phase,      iif( char_count(a, '|') > 0, true, iif(char_count(a, '/') > 0, false, null)),
-   chromosome_id, $CHROMOSOME_ID
+   phase,      iif( char_count(a, '|') > 0, true, iif(char_count(a, '/') > 0, false, null))
   ),
   KG_GENOTYPE
  ),
