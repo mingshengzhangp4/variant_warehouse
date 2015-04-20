@@ -139,46 +139,6 @@ aggregate(
  max(sid)
 )" | tail -n 1`
 log "Added sample id $SAMPLE_ID"
-log "Loading chromosomes"
-iquery -anq "
-insert(
- redimension(
-  apply(
-   cross_join(
-    project(
-     unpack(
-      filter(
-       index_lookup(
-        uniq(
-         sort(
-          project(
-           filter(
-            GVCF_LOAD_BUF_$RIND,
-            chunk_no > $SL_CN or line_no > $SL_LN
-           ),
-           a0
-          )
-         )
-        ),
-        GVCF_CHROMOSOME,
-        a0,
-        chrom_idx
-       ),
-       chrom_idx is null
-      ),
-      j
-     ),
-     a0
-    ),
-    aggregate(GVCF_CHROMOSOME, count(*) as count)
-   ),
-   chromosome_id, j + count,
-   chromosome, a0
-  ),
-  GVCF_CHROMOSOME
- ),
- GVCF_CHROMOSOME
-)" > /dev/null
 log "Loading data"
 iquery -anq "
 insert(
