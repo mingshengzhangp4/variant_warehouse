@@ -1,7 +1,7 @@
-vcf_tools
+variant_warehouse
 =========
 
-Prototype for loading VCF Datasets into SciDB, currently built around the 1000 Genomes dataset.
+Examples of loading and processing Genomic Variant Datasets in SciDB, currently built around the 1000 Genomes dataset.
 Very very early, unstable. Work in progress.
 
 Part of the original prototype was adapted from scidb-genotypes by Douglas Slotta (NCBI)
@@ -12,9 +12,9 @@ These scripts were created for SciDB 14.12 or newer. The larger the cluster - th
 ### gene_37: a simple set of gene locations
 A tsv and a loader script to create a very simple array of gene positions, used in some queries.
 
-### kg_loader: for the 1000 Genomes Dataset
+### load_1000g: for the 1000 Genomes Dataset
 Scripts to load the Phase 3 VCF data or data with very similar organization.
-[Click here](https://github.com/Paradigm4/vcf_tools/tree/master/kg_loader) for more information.
+[Click here](https://github.com/Paradigm4/variant_warehouse/tree/master/load_1000g) for more information.
 
 ### R toolkit
 Currently in the process of being revamped.
@@ -22,5 +22,5 @@ Currently in the process of being revamped.
 ### AMI
 Some older VCF examples are shown in the Bioinformatics AMI. Instructions for that are here: http://www.paradigm4.com/try_scidb/
 
-### gvcf: Tools for loading and processing gvcf files
+### load_gvcf: Tools for loading and processing GVCF files
 Work in progress

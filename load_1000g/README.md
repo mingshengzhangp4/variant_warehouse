@@ -1,4 +1,4 @@
-kg_loader
+load_1000g
 =========
 
 An example loader script and schema for the 1000 Genomes Phase 3 dataset. 
