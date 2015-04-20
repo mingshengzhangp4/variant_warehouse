@@ -6,6 +6,23 @@
 #
 # END_COPYRIGHT
 
+library(scidb)
+scidbconnect()
+
+#You need to at least load one 1000G file for these to work.
+#An example_20k vcf file is provided.
+KG_CHROMOSOME = scidb("KG_CHROMOSOME")
+KG_VARIANT    = scidb("KG_VARIANT")
+KG_GENOTYPE   = scidb("KG_GENOTYPE")
+KG_SAMPLE     = scidb("KG_SAMPLE")
+
+#Load the populations file
+KG_POPULATION = scidb("KG_POPULATION")
+
+#Need to run load_gene.sh for this
+GENE = scidb("GENE_37")
+
+
 #simple one-liner to start: count the 1000G variants grouped by chromosome
 #note the chromosome_id assignment will depend on the order in which data is loaded
 count_variants_by_chromosome= function()
@@ -15,7 +32,7 @@ count_variants_by_chromosome= function()
 
 #Get data for all variants in a particular region.
 #Result is returned as a data.frame; overlapping variants may be included with a flag
-get_variants_in_region = function( chromosome = '3', start = 2000000, end = 2001000, overlaps=TRUE)
+get_variants_in_region = function( chromosome = '10', start = 100000, end = 110000, overlaps=TRUE)
 {
   if (overlaps == FALSE)
   {
@@ -34,7 +51,7 @@ get_variants_in_region = function( chromosome = '3', start = 2000000, end = 2001
 }
 
 #Lookup gene coordinates by name, return as a 1-row data.frame
-lookup_gene = function(gene = 'PASK')
+lookup_gene = function(gene = 'TUBB8')
 {
   gene_info = subset(GENE, sprintf("gene='%s'", gene))
   cnt = count(gene_info)
@@ -46,7 +63,7 @@ lookup_gene = function(gene = 'PASK')
 }
 
 #Lookup region for gene, then lookup variants for that region
-get_variants_in_gene = function (gene = 'PASK', overlaps=FALSE)
+get_variants_in_gene = function (gene = 'TUBB8', overlaps=FALSE)
 {
   gene_info = lookup_gene(gene)
   return (get_variants_in_region(gene_info$chromosome, gene_info$start, gene_info$end, overlaps))
@@ -55,13 +72,31 @@ get_variants_in_gene = function (gene = 'PASK', overlaps=FALSE)
 #Look up all non-reference variants for a sample
 #This typically returns a few hundred thousand positions per chromosome
 #Exercise for the reader: restrict this to specific position ranges
-get_variants_for_sample = function(chromosome = '3', sample = 'HG00100')
+get_variants_for_sample = function(sample = 'HG00100', n=25)
 {
-  result = subset(KG_GENOTYPE, "allele_1 or allele_2")[KG_CHROMOSOME=='3',,,,KG_SAMPLE=='HG00100',redim=FALSE]
+  result = subset(KG_GENOTYPE, "allele_1 or allele_2")[,,,,KG_SAMPLE==sample,redim=FALSE]
   result = merge(KG_VARIANT, result)
   result = unpack(result)
   result = project(result, c("start", "reference", "alternate", "allele_1", "allele_2", "phase"))
-  iqdf(result, n=50)
+  iqdf(result, n=n)
+}
+
+#Lookup all samples that are homozygous or heterozygous for a particular variant
+#Try this position with "alternate='A'"
+get_samples_for_variant = function(chromosome = '10', start=332231, alternate='T')
+{
+  iqdf(
+    project(
+      merge(
+        merge(
+         subset(KG_GENOTYPE, 'allele_1 or allele_2'),
+         project(subset(KG_VARIANT[KG_CHROMOSOME==chromosome, start,,], sprintf("alternate='%s'",alternate)), c("reference", "alternate"))
+        ),
+        KG_SAMPLE
+      ),
+      c("sample", "reference", "alternate", "allele_1", "allele_2")
+    )
+  )
 }
 
 #Select a set of variants for a region and then compute the allele frequencies, grouped by
@@ -74,7 +109,7 @@ get_variants_for_sample = function(chromosome = '3', sample = 'HG00100')
 #3      2000226           G           A     46          EAS               1
 #3      2000226           G           A     46          EUR               0
 #3      2000226           G           A     46          SAS               45
-grouped_allele_count = function (chromosome='3', start = 2000000, end = 2001000, overlaps=TRUE)
+grouped_allele_count = function (chromosome='10', start = 100000, end = 120000, overlaps=TRUE)
 {
   if (overlaps == FALSE)
   {
@@ -95,7 +130,7 @@ grouped_allele_count = function (chromosome='3', start = 2000000, end = 2001000,
   return(result)
 }
 
-grouped_allele_count_in_gene = function(gene = 'PASK', overlaps=TRUE)
+grouped_allele_count_in_gene = function(gene = 'TUBB8', overlaps=TRUE)
 {
   gene_info = lookup_gene(gene)
   return (grouped_allele_count(gene_info$chromosome, gene_info$start, gene_info$end, overlaps))
@@ -206,7 +241,8 @@ pca = function(min_af = 0.1, max_af = 0.9, variant_limit, chunk_size=512)
   print(sprintf("%f %f: SVD Computed", (proc.time()-t0)[3], (proc.time()-t1)[3]))
   
   download = svded[,0:2][]
-  color = iqdf(project(bind(merge(KG_SAMPLE, KG_POPULATION), "color", "iif(population='AMR', 'blue', iif(population='AFR', 'red', iif(population='EUR', 'green', iif(population='EAS', 'yellow', 'orange'))))"), "color"), n=Inf)$color
+  color = iqdf(project(bind(merge(KG_SAMPLE, KG_POPULATION), "color", "iif(population='AMR', 'blue', iif(population='AFR', 'red', iif(population='EUR', 'green', iif(population='EAS', 'purple', 'orange'))))"), "color"), n=Inf)$color
+  
   #See https://github.com/bwlewis/rthreejs
   #library(threejs)
   scatterplot3js(download, size=0.25, color=color)
