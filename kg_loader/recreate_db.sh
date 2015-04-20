@@ -28,7 +28,7 @@ create array KG_VARIANT
  ac:double            null,
  af:double            null> 
 [chromosome_id=0:*,1,0,
- start        =0:*,10000000,0,  --gives us about 30K variants per chunk; many INFO fields contain long strings
+ start        =0:*,10000000,0,
  end          =0:*,10000000,0,
  alternate_id =0:19,20,0];
 
@@ -40,5 +40,5 @@ create array KG_GENOTYPE
  start        =0:*,10000000,0,
  end          =0:*,10000000,0,
  alternate_id =0:19,20,0,
- sample_id    =0:*,100,0];     --about 3M variant/sample entries per chunk, using small boolean attributes
+ sample_id    =0:*,100,0];
 "
