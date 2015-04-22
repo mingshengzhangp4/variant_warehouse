@@ -338,21 +338,28 @@ iquery -anq "
 insert(
  redimension(
   apply(
-   cross_join(
-    between(
-     KG_LOAD_BUF,
-     null, null, null, $NUM_PRESAMPLE_ATTRIBUTES, 
-     null, null, null, $NUM_ATTRIBUTES-1
-    ) as BUF,
-    KG_LOAD_REDIM_MASK  as MASK,
-    BUF.source_instance_id, MASK.source_instance_id,
-    BUF.chunk_no,           MASK.chunk_no,
-    BUF.line_no,            MASK.line_no    
-   ),
-   sample_id,  attribute_no - $NUM_PRESAMPLE_ATTRIBUTES,
-   allele_1,   dcast(nth_tdv(a, 0, '|/'), int64(null)) = file_alt_number,
-   allele_2,   dcast(nth_tdv(a, 1, '|/'), int64(null)) = file_alt_number,
-   phase,      iif( char_count(a, '|') > 0, true, iif(char_count(a, '/') > 0, false, null))
+   materialize(
+    apply(
+     cross_join(
+      between(
+       KG_LOAD_BUF,
+       null, null, null, $NUM_PRESAMPLE_ATTRIBUTES, 
+       null, null, null, $NUM_ATTRIBUTES-1
+      ) as BUF,
+      KG_LOAD_REDIM_MASK  as MASK,
+      BUF.source_instance_id, MASK.source_instance_id,
+      BUF.chunk_no,           MASK.chunk_no,
+      BUF.line_no,            MASK.line_no    
+     ),
+     sample_id,  attribute_no - $NUM_PRESAMPLE_ATTRIBUTES,
+     a1, dcast(nth_tdv(a, 0, '|/'), int64(null)),
+     a2, dcast(nth_tdv(a, 1, '|/'), int64(null)),
+     phase, iif( char_count(a, '|') > 0, true, iif(char_count(a, '/') > 0, false, null))
+    ),
+    0
+   ),     
+   allele_1,   iif(a1 = 0, false, iif(a1 = file_alt_number, true, iif(a1 is null, null, bool(missing(1))))),
+   allele_2,   iif(a2 = 0, false, iif(a2 = file_alt_number, true, iif(a2 is null, null, bool(missing(1)))))
   ),
   KG_GENOTYPE
  ),
