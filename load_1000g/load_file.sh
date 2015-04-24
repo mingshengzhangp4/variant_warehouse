@@ -11,13 +11,13 @@
 #We'll load as follows:
 #VARIANT array in DB (omitting chrom_id dimension and some attributes):
 #start      end         alt_id  ref      alt
-#206959388  206959390   1       TAC      T	
-#206959388  206959392   1       T        TACAC
-#206959388  206959392   2       TAC      TACAC
+#206959388  206959388   1       T        TACAC
+#206959388  206959388   2       T        TACACAC
+#206959388  206959390   1       TAC      T
+#206959388  206959390   2       TAC      TACAC
 #206959388  206959394   1       TACACAC  T
-#206959388  206959394   2       T        TACACAC
 
-#GENOTYPE array in DB (omitting chrom_id):
+#GENOTYPE array in DB (omitting chrom_id) would look like this:
 #start      end         alt_id  sample_id  a1     a2     phase
 #...
 #206959388  206959392   1       0          false  false  true
@@ -286,12 +286,15 @@ store(
      alternate, 
      nth_csv(alt, file_alt_number-1)
     ),
+    -- We saw a few different ways to encode start and end fields
+    -- Here, start shall be same as the POS field
+    -- for SNPs and small INDELs END will be strlen(REF) + POS - 1,
+    -- for larger variants, END will be whatever the 'END' field of the INFO says
+    -- otherwise it will be 'POS' if there is no END field.
     start, int64(pos),
-    end,   iif(substr(alternate, 0,1) <> '<', int64(iif(strlen(ref) > strlen(alternate), strlen(ref), strlen(alternate))) + pos - 1,
+    end,   iif(substr(alternate, 0,1) <> '<', strlen(ref) + pos - 1,
            iif(keyed_value(info, 'END', null) is not null, int64(keyed_value(info, 'END', null)),
-           iif(keyed_value(info, 'SVLEN', null) is not null and int64(keyed_value(info, 'SVLEN', null)) > 0, 
-              int64(keyed_value(info, 'SVLEN',null)) + pos - 1, 
-              pos)))
+           pos))
    ),
    <source_instance_id:int64, chunk_no:int64, line_no:int64, file_alt_number:int64> 
    [chromosome_id=0:*,1,0, start=0:*,10000000,0, end=0:*,10000000,0, alternate_id=1:20,20,0]
