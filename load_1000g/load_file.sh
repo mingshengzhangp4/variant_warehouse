@@ -61,7 +61,9 @@ function delete_old_versions()
 {
   ARRAY_NAME=$1
   MAX_VERSION=`iquery -ocsv -aq "aggregate(versions($ARRAY_NAME), max(version_id) as max_version)" | tail -n 1`
-  iquery -anq "remove_versions($ARRAY_NAME, $MAX_VERSION)" > /dev/null
+  if [ $MAX_VERSION != "null" -a $MAX_VERSION -gt 0 ] ; then   
+    iquery -anq "remove_versions($ARRAY_NAME, $MAX_VERSION)" > /dev/null
+  fi
 }
 
 if [ $# -ne 1 ]; then
