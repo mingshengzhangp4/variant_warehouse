@@ -244,6 +244,6 @@ pca = function(min_af = 0.1, max_af = 0.9, variant_limit, chunk_size=512)
   color = iqdf(project(bind(merge(KG_SAMPLE, KG_POPULATION), "color", "iif(population='AMR', 'blue', iif(population='AFR', 'red', iif(population='EUR', 'green', iif(population='EAS', 'purple', 'orange'))))"), "color"), n=Inf)$color
   
   #See https://github.com/bwlewis/rthreejs
-  #library(threejs)
+  library(threejs)
   scatterplot3js(download, size=0.25, color=color)
 }
