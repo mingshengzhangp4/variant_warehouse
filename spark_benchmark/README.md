@@ -44,7 +44,7 @@ nohup ./query3-submit > query3_pca 2>&1 &
 
 The benchmark queries are run as a single query at a time and the performance values are recorded from the spark dashboard or timed statements within scala. There are spark settings to keep the dashboard up after the job has stopped running. 
 
-###Spark Jobs Dashboard Link : http://10.0.20.195:4040 The default port is 4040. 
+Spark Jobs Dashboard Link : http://yourcluster:4040 The default port is 4040. 
 
 
 
