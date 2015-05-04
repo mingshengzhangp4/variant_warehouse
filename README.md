@@ -45,5 +45,5 @@ Some older VCF examples are shown in the Bioinformatics AMI. Instructions for th
 
 ##Spark Benchmark
 
-
+The Benchmark project was started as a performance comparison between SciDB and Apache Spark using realistic queries in genomic processing. The benchmark results highlights SciDBs important performance achievement because of MAC technology and other architectural decisions to become the choice architecure for Variant Warehouse processing. The code for the spark benchmark is located in variant_warehouse/spark_benchmark.
 
