@@ -1,6 +1,7 @@
 SciDB/Apache Spark/ADAM Benchmark Project
 
-The Spark Benchmark is constructed with software from the below open source repositories and software versions. This is specified in the query.sbt file in the spark_benchmark directory. 
+The Benchmark project was started as a performance comparison between SciDB and Apache Spark using realistic queries in genomic processing. The benchmark results highlights SciDBs important performance achievement because of MAC technology and other architectural decisions to become the choice architecure for Variant Warehouse processing.       
+The Spark portion of the benchmark is constructed with software from the below open source repositories and software versions. This is specified in the query.sbt file in the spark_benchmark directory. 
 
 scalaVersion  "2.10.4"
 "org.apache.spark" %% "spark-core"   % "1.2.1",
@@ -18,7 +19,7 @@ To time the decompression, load onto the HDFS filesystem, and convert chromosome
 
 Below are examples of scripts that submit the benchmark to spark. The scripts will have to be modified to include the location of the ADAM software distribution and the location of the compiled benchmark jar.  
 
-#!/bin/bash
+/bin/bash
 nohup ./query1-submit > query1_join_normalized 2>&1 &
 nohup ./query2-submit > query2_groupedcount 2>&1 &
 nohup ./query3-submit > query3_pca 2>&1 &
