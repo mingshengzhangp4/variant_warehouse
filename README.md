@@ -1,8 +1,7 @@
 Geonomic Variant Data Warehouse
 =========
-With SciDB's MAC technology and other critical architecture features made for multi-user large dataset exploration prowess, it is poised to become the premier variant warehouse computational database management system solution. http://www.paradigm4.com
 
-This repository has been constructed to organize the functions to load and process Variant datasets and provide other functionality to facilitate the exploration of the publicly available variant datasets in general. A few of the scripts may be of demo or prototype quality, but can be adapted quickly for a variety of purposes and your particular use case. 
+This repository has been constructed to organize the functions to load and process variant datasets and provide other functionality to facilitate the exploration of the publicly available variant datasets in general. A few of the scripts may still be prototype. These can be adapted quickly for a variety of purposes and your particular use case. 
 
 In the base directory(variant_warehouse) are examples of loading and processing Genomic Variant Datasets in SciDB, currently built around the 1000 Genomes dataset. (http://www.1000genomes.org)
 
@@ -45,5 +44,5 @@ Some older VCF examples are shown in the Bioinformatics AMI. Instructions for th
 
 ##Spark Benchmark
 
-The Benchmark project was started as a performance comparison between SciDB and Apache Spark using realistic queries in genomic processing. The benchmark results highlights SciDBs important performance achievement because of MAC technology and other architectural decisions to become the choice architecure for Variant Warehouse processing. The code for the spark benchmark is located in variant_warehouse/spark_benchmark.
+The Benchmark comprises common genomic processing queries to highlight the differences between SciDB and Spark-Adam.  The code for the spark benchmark is located in variant_warehouse/spark_benchmark.
 
