@@ -14,6 +14,8 @@ These scripts were created for SciDB 14.12 or newer. The larger the cluster - th
 
 Below are the data loading scripts found in the base directory(variant_warehouse):
 
+##Data Loading
+
 ### load_gene_37: a simple set of gene locations
 A tsv and a loader script to create a very simple array of gene positions, used in some queries.
 
@@ -27,6 +29,7 @@ Scripts to load ESP data, similar to load_1000g in nature.
 ### load_gvcf: for the GVCF format
 
 Below are examples of demonstration code for variant processing use cases. 
+##Use Case Demonstration
 
 ### vcf_toolkit.R
 A set of example queries using 1000 Genomes and ESP data using R. Includes sample lookups, allele counts, PCA plot, range joins.
