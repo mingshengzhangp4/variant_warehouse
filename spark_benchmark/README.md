@@ -22,7 +22,7 @@ org.apache.hadoop:hadoop-client  "2.6.0"
 The encompassing directory(spark_benchmark) contains the Apache Spark code and scripts for including dependencies. 
 The benchmark can be built by the command "sbt package" at the base level of the spark_benchmark directory( where the query.sbt exists) using the interactive build tool.   http://www.scala-sbt.org
 
-An example of how to run individual benchmarks:
+###An example of how to run individual benchmarks:
 
 To time the decompression of a tar/zipped VCF file, load onto the HDFS filesystem, and convert chromosome 8 to the ADAM data model:
 
@@ -44,7 +44,7 @@ nohup ./query3-submit > query3_pca 2>&1 &
 
 The benchmark queries are run as a single query at a time and the performance values are recorded from the spark dashboard or timed statements within scala. There are spark settings to keep the dashboard up after the job has stopped running. 
 
-Spark Jobs Dashboard Link : http://10.0.20.195:4040 The default port is 4040. 
+###Spark Jobs Dashboard Link : http://10.0.20.195:4040 The default port is 4040. 
 
 
 
