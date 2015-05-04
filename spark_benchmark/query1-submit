@@ -72,14 +72,17 @@ source "$SPARK_HOME"/bin/utils.sh
 SUBMIT_USAGE_FUNCTION=usage
 gatherSparkSubmitOpts $NEW_OPTIONS
 
+
+
+# TO RUN BENCHMARK The location of the compiled jar needs to be added below. 
 # submit the job to Spark
 "$SPARK_SUBMIT" \
-  --class "Query2" \
+  --class "Query1" \
   --conf spark.serializer=org.apache.spark.serializer.KryoSerializer \
   --conf spark.kryo.registrator=org.bdgenomics.adam.serialization.ADAMKryoRegistrator \
   --conf spark.kryo.referenceTracking=true \
   ${ADAM_OPTS:- } \
   "${SUBMISSION_OPTS[@]}" \
-  "/home/bio//jrivers/adam/sparkbenchmark/benchmarkcode/target/scala-2.10/query-project_2.10-1.0.jar" \ 
+  "/home/bio/jrivers/adam/sparkbenchmark/benchmarkcode/target/scala-2.10/query-project_2.10-1.0.jar" \ 
   "${APPLICATION_OPTS[@]}" 
 

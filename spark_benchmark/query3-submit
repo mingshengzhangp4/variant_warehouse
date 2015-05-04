@@ -74,7 +74,7 @@ gatherSparkSubmitOpts $NEW_OPTIONS
 
 # submit the job to Spark
 "$SPARK_SUBMIT" \
-  --class "Query4" \
+  --class "Query3" \
   --conf spark.serializer=org.apache.spark.serializer.KryoSerializer \
   --conf spark.kryo.registrator=org.bdgenomics.adam.serialization.ADAMKryoRegistrator \
   --conf spark.kryo.referenceTracking=true \

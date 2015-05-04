@@ -2,7 +2,7 @@
 START=$(date +%s)
 
 #start 
-infolder=/home/bio/jrivers/testdata/
+infolder=/home/bio/testdata/
 unzipvcffile=ALL.chr8.phase3_shapeit2_mvncall_integrated_v4.20130502.genotypes.vcf
 suffix=.gz
 
@@ -17,7 +17,7 @@ hdfs dfs -put $infolder$unzipvcffile /sandbox/$unzipvcffile
 ENDHDFS=$(date +%s)
 
 STARTADAM=$(date +%s)
-/home/bio/jrivers/adam/bin/adam-submit vcf2adam hdfs://10.0.20.195:9000/sandbox/$unzipvcffile hdfs://10.0.20.195:9000/sandbox/${unzipvcffile}.adam
+/home/bio/adam/bin/adam-submit vcf2adam hdfs://10.0.20.195:9000/sandbox/$unzipvcffile hdfs://10.0.20.195:9000/sandbox/${unzipvcffile}.adam
 ENDADAM=$(date +%s)
 
 #end 
