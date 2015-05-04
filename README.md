@@ -2,7 +2,7 @@ Geonomic Variant Data Warehouse
 =========
 With SciDB's MAC technology and other critical architecture features made for multi-user large dataset exploration prowess, it is poised to become the premier variant warehouse computational database management system solution. http://www.paradigm4.com
 
-This repository has been constructed to organize the functions to load and process Variant datasets and provide other functionality to facilitate the exploration of the publicly available variant datasets in general. Some of the scripts may be of demo or prototype quality, but can be adapted quickly for a variety of purposes and your particular use case. 
+This repository has been constructed to organize the functions to load and process Variant datasets and provide other functionality to facilitate the exploration of the publicly available variant datasets in general. A few of the scripts may be of demo or prototype quality, but can be adapted quickly for a variety of purposes and your particular use case. 
 
 In the base directory(variant_warehouse) are examples of loading and processing Genomic Variant Datasets in SciDB, currently built around the 1000 Genomes dataset. (http://www.1000genomes.org)
 
