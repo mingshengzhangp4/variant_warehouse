@@ -5,7 +5,7 @@ The Benchmark project was started as a performance comparison between SciDB and 
 The Spark portion of the benchmark is constructed with software from the below open source repositories and software versions. This is specified in the query.sbt file in the spark_benchmark directory. 
 
 
-scalaVersion  2.10.4
+scalaVersion  "2.10.4"
 
 
 org.apache.spark:spark-core   "1.2.1"
