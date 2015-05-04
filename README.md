@@ -12,7 +12,7 @@ See: https://github.com/slottad/scidb-genotypes
 
 These scripts were created for SciDB 14.12 or newer. The larger the cluster - the faster these will run as they are designed for scalability. The load_tools plugin is required for a vast majority of the examples. See: www.github.com/paradigm4/load_tools
 
-Below are some of the data loading scripts found in the base directory(variant_warehouse):
+Below are the data loading scripts found in the base directory(variant_warehouse):
 
 ### load_gene_37: a simple set of gene locations
 A tsv and a loader script to create a very simple array of gene positions, used in some queries.
