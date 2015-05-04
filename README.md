@@ -1,8 +1,10 @@
 variant_warehouse
 =========
+With SciDB's MAC technology and other critical architecture features made for multi-user large dataset exploration prowess, it is poised to become the premier variant warehouse computational database management system solution. 
+
 
 Examples of loading and processing Genomic Variant Datasets in SciDB, currently built around the 1000 Genomes dataset.
-Very very early, unstable. Work in progress.
+
 
 Part of the original prototype was adapted from scidb-genotypes by Douglas Slotta (NCBI)
 See: https://github.com/slottad/scidb-genotypes
