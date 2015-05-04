@@ -16,11 +16,20 @@ A tsv and a loader script to create a very simple array of gene positions, used 
 Scripts to load the Phase 3 VCF data or data with very similar organization.
 [Click here](https://github.com/Paradigm4/variant_warehouse/tree/master/load_1000g) for more information.
 
-### load_gvcf: Tools for loading and processing GVCF files
-Work in progress
+### load_ESP: for the Exome Sequencing Project Dataset
+Scripts to load ESP data, similar to load_1000g in nature.
 
-### R toolkit
-Currently in the process of being revamped.
+### load_gvcf: for the GVCF format
+Work in progress.
+
+### vcf_toolkit.R
+A set of example queries using 1000 Genomes and ESP data using R. Includes sample lookups, allele counts, PCA plot, range joins.
+
+### example_afl_scripts
+Some sample queries in AFL, including grouped allele count and a join of ESP and 1000 Genomes.
+
+### shiny_browser
+A variant browser app that computes allele counts grouped by major population and makes an interactive plot.
 
 ### AMI
 Some older VCF examples are shown in the Bioinformatics AMI. Instructions for that are here: http://www.paradigm4.com/try_scidb/
