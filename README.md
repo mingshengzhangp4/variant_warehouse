@@ -1,6 +1,6 @@
 variant_warehouse
 =========
-With SciDB's MAC technology and other critical architecture features made for multi-user large dataset exploration prowess, it is poised to become the premier variant warehouse computational database management system solution. 
+With SciDB's MAC technology and other critical architecture features made for multi-user large dataset exploration prowess, it is poised to become the premier variant warehouse computational database management system solution. http://www.paradigm4.com
 
 This repository has been constructed to organize the functions to load and process Variant datasets and provide other functionality to facilitate the exploration of the publicly available variant datasets in general. Some of the scripts may be of demo or prototype quality, but can be adapted quickly for a variety of purposes and your particular use case. 
 
