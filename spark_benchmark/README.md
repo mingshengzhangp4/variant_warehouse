@@ -1,4 +1,4 @@
-# SciDB/Apache Spark/ADAM Benchmark Project
+# SciDB/Apache Spark-ADAM Benchmark Project
 
 The Benchmark project was started as a performance comparison between SciDB and Apache Spark using realistic queries in genomic processing. The benchmark results highlights SciDBs important performance achievement because of MAC technology and other architectural decisions to become the choice architecure for Variant Warehouse processing.
 
