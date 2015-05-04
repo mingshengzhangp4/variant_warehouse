@@ -1,7 +1,7 @@
 name := "Spark Benchmark Project"
 version := "1.0"
 
-The Spark Benchmark constructed with the software from the above open source repositories and software versions.This is specified in the query.sbt file in the directory. 
+The Spark Benchmark is constructed with the software from the below open source repositories and software versions. This is specified in the query.sbt file in the spark_benchmark directory. 
 
 scalaVersion := "2.10.4"
 "org.apache.spark" %% "spark-core"   % "1.2.1",
@@ -9,11 +9,11 @@ scalaVersion := "2.10.4"
 "org.apache.spark"  %  "spark-mllib_2.10"  % "1.2.1",
 "org.apache.hadoop" % "hadoop-client" % "2.6.0"
 
-You should be able to build the benchmark the typing sbt package at the base level of the spark_benchmark directory( where the query.sbt is). 
+You should be able to build the benchmark the typing "sbt package" at the base level of the spark_benchmark directory( where the query.sbt exists). http://www.scala-sbt.org
 
 An example of how to run individual benchmarks are:
 
-To time the unzipping, loading onto the HDFS filesystem, and converting to the datamodel:
+To time the unzipping, load onto the HDFS filesystem, and convert to the datamodel:
 .\query0chrom8_1000.sh
 
 Below are examples of scripts that submit a query to spark.The scripts will have to be modified to include the location of the ADAM software distribution and the location of the compiled benchmark jar.  
