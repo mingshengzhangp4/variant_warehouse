@@ -43,3 +43,7 @@ A variant browser app that computes allele counts grouped by major population an
 ### AMI
 Some older VCF examples are shown in the Bioinformatics AMI. Instructions for that are here: http://www.paradigm4.com/try_scidb/
 
+##Spark Benchmark
+
+
+
