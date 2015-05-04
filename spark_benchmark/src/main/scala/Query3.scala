@@ -118,11 +118,11 @@ def orgPCAtake(sc: SparkContext, outputPath: String, sampledGts: RDD[Genotype], 
 
      //filtersampledall.persist(MEMORY_AND_DISK).saveAsObjectFile(outputPath + "filtersampledall")
      
-     val rowmapidx = filtersampledall.persist(MEMORY_AND_DISK).map({case(a,b) =>(b._1,b._2, b._3, b._4)}).distinct.zipWithIndex().map({case(a,b) => (a,(b,0,"",0.0))})
+     val rowmapidx = filtersampledall.map({case(a,b) =>(b._1,b._2, b._3, b._4)}).distinct.zipWithIndex().map({case(a,b) => (a,(b,0,"",0.0))})
 
      //rowmapidx.persist(MEMORY_AND_DISK).saveAsObjectFile(outputPath + "rowmapidx")
 
-     val dataout:RDD[(Long, Int, Double)]   = filtersampledall.persist(MEMORY_AND_DISK).map({case(a,b) => (a,(0,0,b._7,b._8))}).join(rowmapidx).map({case(a,b) => (b._1._3 ,(b._2._1, 0, b._1._4))}).join(colmapidx).map({case(a,b) => (b._1._1, b._2._2, b._1._3)})
+     val dataout:RDD[(Long, Int, Double)]   = filtersampledall.map({case(a,b) => (a,(0,0,b._7,b._8))}).join(rowmapidx).map({case(a,b) => (b._1._3 ,(b._2._1, 0, b._1._4))}).join(colmapidx).map({case(a,b) => (b._1._1, b._2._2, b._1._3)})
 
      //dataout.persist(MEMORY_AND_DISK).saveAsObjectFile(outputPath)
 
