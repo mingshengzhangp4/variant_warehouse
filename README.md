@@ -1,4 +1,4 @@
-Geonomic Variant Data Warehouse
+Genomic Variant Data Warehouse
 =========
 
 This repository has been constructed to organize the functions to load and process variant datasets and provide other functionality to facilitate the exploration of the publicly available variant datasets in general. A few of the scripts may still be prototype. These can be adapted quickly for a variety of purposes and your particular use case. 
