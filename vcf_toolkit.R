@@ -247,3 +247,68 @@ pca = function(min_af = 0.1, max_af = 0.9, variant_limit, chunk_size=512)
   library(threejs)
   scatterplot3js(download, size=0.25, color=color)
 }
+
+
+
+# genes: character vector of genes to interrogate
+# overlaps: find overlapping variants (TRUE) or interior variants (FALSE)
+# Compute variants within a list of specified genes and return sums of
+# allele counts grouped by gene and 1000 genome super population id.
+variants_by_gene_and_population = function(genes, overlaps = TRUE)
+{
+  g37 = GENE[]
+  g37 = g37[g37$gene %in% genes, ]
+  g37$end = as.integer(g37$end)
+  g37$start = as.integer(g37$start)
+  GENE = as.scidb(g37, types=c("string","string","int64","int64"), nullable=FALSE)
+
+  #Choose a bucket size that's bigger than the largest range of interest
+  #subset GENE where name matches your list
+  max_gene_length = aggregate(bind(GENE, "length", "end - start + 1"), FUN="max(length)")[]
+  max_variant_length = aggregate(bind(KG_VARIANT, "length", "end - start + 1"), FUN="max(length)")[]
+  bucket_size = max(max_gene_length, max_variant_length)+1
+  
+  #safe upper bound: no more than 5 features for each coordinate
+  chunk_size = 5*bucket_size
+  
+  #Each variant goes into a bucket: if you need more per-variant data than just the count, add it here
+  bucketed_variants = bind(KG_VARIANT, "bucket", sprintf("start / %i", bucket_size))
+  bucketed_variants = bind(bucketed_variants, "variant_start", "start")
+  bucketed_variants = bind(bucketed_variants, "variant_end",    "end")
+  #include alternate_id, so you can use it later
+  bucketed_variants = redimension(bucketed_variants, sprintf("<variant_start:int64, variant_end:int64, alternate_id:int64>[chromosome_id=0:*,1,0, bucket=0:*,1,0, vn=1:%i,%i,0]", chunk_size, chunk_size))
+  bucketed_variants = scidbeval(bucketed_variants, temp=TRUE)
+  
+  #Now, each gene goes into *up to 3 adjacent buckets* For that, we cross it with a 3-cell vector
+  bucketed_genes = index_lookup(GENE, KG_CHROMOSOME, "chromosome", "chromosome_id")
+  bucketed_genes = merge(bucketed_genes, build("j", names=c("val","j"), dim=3, type="int64"))  #cross-product with 3-cell vector [(0),(1),(2)]
+  bucketed_genes = bind(bucketed_genes, c("bucket", "gene_start", "gene_end"), c(sprintf("start / %i - 1 + j", bucket_size), "start", "end")) 
+  bucketed_genes = subset(bucketed_genes, "bucket>=0") 
+  bucketed_genes = redimension(bucketed_genes, sprintf("<gene:string, gene_start:int64, gene_end:int64>[chromosome_id=0:*,1,0, bucket=0:*,1,0, gn=1:%i,%i,0]", chunk_size, chunk_size))
+  bucketed_genes = scidbeval(bucketed_genes, temp=TRUE)
+  
+  #Now bucketed_variants and bucketed_genes will join efficiently on [chromosome_id, bucket]
+  #The shape of the join output is [chromosome_id, bucket, vn, gn]
+  result = merge(bucketed_variants, bucketed_genes)
+  
+  #This filter will be run in parallel, comparing only genes and variants that fall in the same chromosome_id, bucket
+  #You can also "carry" attribute values into the two arrays above and include an attribute comparison predicate here
+  if (overlaps)
+  {
+    result = subset(result, "gene_start <= variant_end and variant_start <= gene_end")  
+  }
+  else
+  {
+    result = subset(result, "gene_start >= variant_start and gene_end <= variant_end")  
+  }
+
+  result = scidbeval(redimension(result, schema="<gene:string>[chromosome_id=0:*,1,0, variant_start=0:*,1000000,0, variant_end=0:*,1000000,0, alternate_id=0:*,20,0]"), temp=FALSE, name="result",gc=FALSE)
+  result = dimension_rename(result, c("variant_start","variant_end"), c("start","end"))
+  gt = bind(KG_GENOTYPE, "ac", "iif(allele_1,1,0) + iif(allele_2,1,0)")
+  g = merge(gt, result)
+  pop=redimension(KG_POPULATION,schema="<population:string> [sample_id=0:*,100,0,population_id=0:4,1,0]")
+  g = merge(g, pop)
+# count each allele combination by superpopulation and variant
+  ans = scidbeval(redimension(g, schema="<ac_sum:int64 null>[chromosome_id=0:*,1,0, start=0:*,1000000,0, end=0:*,1000000,0, alternate_id=0:*,20,0, population_id=0:*,1,0]", FUN="sum(ac) as ac_sum"), temp=FALSE, name="ac", gc=FALSE)
+  ans
+}
