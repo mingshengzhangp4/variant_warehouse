@@ -136,6 +136,102 @@ grouped_allele_count_in_gene = function(gene = 'TUBB8', overlaps=TRUE)
   return (grouped_allele_count(gene_info$chromosome, gene_info$start, gene_info$end, overlaps))
 }
 
+#Generic range join over genomic ranges
+#left and right are input arrays, left should be the larger
+#left and right must both contain "chromosome_id", "start" and "end" as either attributes (non-null int64) or dimensions
+#left_attributes and right_attributes are lists of attributes to extract from left and right
+#do not include chromosome_id, start or end in the left_attributes or right_attributes_lists
+#Returns an unevaluated array of the form 
+#  <LEFT.start:int64,  LEFT.end:int64,  [left_attributes], 
+#   RIGHT.start:int64, RIGHT.end:int64, [right_attributes]>
+#  [chromosome_id, bucket, left_synthetic, right_synthetic]
+#For example usage, see next function
+range_join = function(left, right, left_attributes, right_attributes, min_bucket_size=1000000, overlaps=TRUE)
+{
+  if ("chromosome_id" %in% dimensions(left) == FALSE  && "chromosome_id" %in% scidb_attributes(left) == FALSE)
+  { stop("Left array does not contain a dimension or attribute 'chromosome_id'") }
+  if ("start" %in% dimensions(left) == FALSE  && "start" %in% scidb_attributes(left) == FALSE)
+  { stop("Left array does not contain a dimension or attribute 'start'") }
+  if ("end" %in% dimensions(left) == FALSE  && "end" %in% scidb_attributes(left) == FALSE)
+  { stop("Left array does not contain a dimension or attribute 'end'") }
+  if ("chromosome_id" %in% dimensions(right) == FALSE  && "chromosome_id" %in% scidb_attributes(right) == FALSE)
+  { stop("Left array does not contain a dimension or attribute 'chromosome_id'") }
+  if ("start" %in% dimensions(right) == FALSE  && "start" %in% scidb_attributes(right) == FALSE)
+  { stop("Left array does not contain a dimension or attribute 'start'") }
+  if ("end" %in% dimensions(right) == FALSE  && "end" %in% scidb_attributes(right) == FALSE)
+  { stop("Left array does not contain a dimension or attribute 'end'") }
+  
+  left_stats  =  aggregate(bind(left,   "length", "end - start + 1"), FUN="max(length) as length, count(*) as count")[]
+  right_stats =  aggregate(bind(right,  "length", "end - start + 1"), FUN="max(length) as length, count(*) as count")[]
+  bucket_size = max(min_bucket_size, left_stats$length, right_stats$length)+1
+
+  left_types = c()
+  for (attr in left_attributes)
+  {
+    idx = which(scidb_attributes(left) %in% attr)
+    if (length(idx) == 0)
+    { left_types = c(left_types, "int64") }
+    else
+    { left_types = c(left_types, sprintf("%s null", scidb_types(left)[idx])) }
+  }
+  left_attributes = c(left_attributes, "start", "end")
+  left_types      = c(left_types,      "int64", "int64")
+  left_attr_schema = sprintf("<%s>", paste(paste(left_attributes, left_types, sep = ":"), collapse = ", "))
+
+  right_types = c()
+  for (attr in right_attributes)
+  {
+    idx = which(scidb_attributes(right) %in% attr)
+    if (length(idx) == 0)
+    { right_types = c(right_types, "int64") }
+    else
+    { right_types = c(right_types, sprintf("%s null", scidb_types(right)[idx])) }
+  }
+  right_attributes = c(right_attributes, "start", "end")
+  right_types      = c(right_types,      "int64", "int64")
+  right_attr_schema = sprintf("<%s>", paste(paste(right_attributes, right_types, sep = ":"), collapse = ", "))
+
+  filter_condition = "LEFT.start <= RIGHT.end and RIGHT.start <= LEFT.end"
+  if (overlaps == FALSE)
+  {
+    filter_condition = "LEFT.start >= RIGHT.start and LEFT.end <= RIGHT.end"
+  }
+  
+  res = scidb(sprintf("
+                       filter(
+                        cross_join(
+                         redimension(
+                          apply(
+                            cross_join( 
+                             %s,
+                             build(<f:bool>[offset=0:1,2,0], true)
+                            ),
+                           bucket, iif(offset = 0, start / %i, iif(end / %i <> start / %i, end / %i, null))
+                          ),
+                          %s [chromosome_id=0:*,1,0, bucket=0:*,1,0, left_synthetic = 0:*,%i,0]
+                         ) as LEFT,
+                         redimension(
+                          apply(
+                            cross_join( 
+                             %s,
+                             build(<f:bool>[offset=0:1,2,0], true)
+                            ),
+                           bucket, iif(offset = 0, start / %i, iif(end / %i <> start / %i, end / %i, null))
+                          ),
+                          %s [chromosome_id=0:*,1,0, bucket=0:*,1,0, right_synthetic = 0:*,%i,0]
+                         ) as RIGHT,
+                         LEFT.chromosome_id, RIGHT.chromosome_id,
+                         LEFT.bucket, RIGHT.bucket
+                        ),
+                        %s and
+                        (LEFT.start / %i = LEFT.end / %i or RIGHT.start / %i = RIGHT.end / %i or LEFT.start / %i = bucket) 
+                       )",
+                       left@name, bucket_size, bucket_size, bucket_size, bucket_size, left_attr_schema, 10 * bucket_size,
+                       right@name, bucket_size, bucket_size, bucket_size, bucket_size, right_attr_schema, 10 * bucket_size,
+                       filter_condition, bucket_size, bucket_size, bucket_size, bucket_size, bucket_size
+  ))
+}
+
 #Locate variants that overlap with genes, and count the number of overlapping variants for each gene.
 #Output the top 50 genes with the most variants.
 #This represents a range join, which has many different use cases in genomics. For example,
@@ -146,49 +242,15 @@ grouped_allele_count_in_gene = function(gene = 'TUBB8', overlaps=TRUE)
 #We're considering building a prototype operator for this task
 rank_genes_by_variants = function(top_n = 50, overlaps = TRUE)
 {
-  #Choose a bucket size that's bigger than the largest range of interest
-  max_gene_length = aggregate(bind(GENE, "length", "end - start + 1"), FUN="max(length)")[]
-  max_variant_length = aggregate(bind(KG_VARIANT, "length", "end - start + 1"), FUN="max(length)")[]
-  bucket_size = max(max_gene_length, max_variant_length)+1
-  
-  #safe upper bound: no more than 5 features for each coordinate
-  chunk_size = 5*bucket_size
-  
-  #Each variant goes into a bucket: if you need more per-variant data than just the count, add it here
-  bucketed_variants = bind(KG_VARIANT, "bucket", sprintf("start / %i", bucket_size))
-  bucketed_variants = bind(bucketed_variants, "variant_start", "start")
-  bucketed_variants = bind(bucketed_variants, "variant_end",    "end")
-  bucketed_variants = redimension(bucketed_variants, sprintf("<variant_start:int64, variant_end:int64>[chromosome_id=0:*,1,0, bucket=0:*,1,0, vn=1:%i,%i,0]", chunk_size, chunk_size))
-  bucketed_variants = scidbeval(bucketed_variants, temp=TRUE)
-  
-  #Now, each gene goes into *up to 3 adjacent buckets* For that, we cross it with a 3-cell vector
-  bucketed_genes = index_lookup(GENE, KG_CHROMOSOME, "chromosome", "chromosome_id")
-  bucketed_genes = merge(bucketed_genes, build("j", names=c("val","j"), dim=3, type="int64"))  #cross-product with 3-cell vector [(0),(1),(2)]
-  bucketed_genes = bind(bucketed_genes, "bucket", sprintf("start / %i - 1 + j", bucket_size)) 
-  bucketed_genes = bind(bucketed_genes, "gene_start", "start")
-  bucketed_genes = bind(bucketed_genes, "gene_end",    "end")
-  bucketed_genes = subset(bucketed_genes, "bucket>=0") 
-  bucketed_genes = redimension(bucketed_genes, sprintf("<gene:string, gene_start:int64, gene_end:int64>[chromosome_id=0:*,1,0, bucket=0:*,1,0, gn=1:%i,%i,0]", chunk_size, chunk_size))
-  bucketed_genes = scidbeval(bucketed_genes, temp=TRUE)
-  
-  #Now bucketed_variants and bucketed_genes will join efficiently on [chromosome_id, bucket]
-  #The shape of the join output is [chromosome_id, bucket, vn, gn]
-  result = merge(bucketed_variants, bucketed_genes)
-  
-  #This filter will be run in parallel, comparing only genes and variants that fall in the same chromosome_id, bucket
-  #You can also "carry" attribute values into the two arrays above and include an attribute comparison predicate here
-  if (overlaps)
-  {
-    result = subset(result, "gene_start <= variant_end and variant_start <= gene_end")  
-  }
-  else
-  {
-    result = subset(result, "gene_start >= variant_start and gene_end <= variant_end")  
-  }
-  result = scidbeval(result, temp=TRUE)
-  result = aggregate(result, FUN="count(*) as num_variants", by="gene")
-  result = sort(result, attributes="num_variants", decreasing=TRUE)
-  return(result[0:top_n-1,][])
+  res = range_join(KG_VARIANT, 
+                   index_lookup(GENE, KG_CHROMOSOME, attr="chromosome", new_attr="chromosome_id"), 
+                   left_attributes="qual", 
+                   right_attributes="i", 
+                   overlaps = overlaps)
+  res = redimension(res, "<count:uint64 null> [i], count(*) as count")
+  res = merge(GENE$gene, res)
+  res = sort(res, attributes="count", decreasing=TRUE)
+  iqdf(res, n=top_n)
 }
 
 #Select all variants whose af is greater than min_af and less than max_af; if variant_limit is
