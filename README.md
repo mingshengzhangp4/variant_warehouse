@@ -11,23 +11,16 @@ See: https://github.com/slottad/scidb-genotypes
 
 These scripts were created for SciDB 14.12 or newer. The larger the cluster - the faster these will run as they are designed for scalability. The load_tools plugin is required for a vast majority of the examples. See: www.github.com/paradigm4/load_tools
 
-Below are the data loading scripts found in the base directory(variant_warehouse):
+##Data Loaders for Various Common Datasets
 
-##Data Loading
-
-### load_gene_37: a simple set of gene locations
-A tsv and a loader script to create a very simple array of gene positions, used in some queries.
-
-### load_1000g: for the 1000 Genomes Dataset
-Scripts to load the Phase 3 VCF data or data with very similar organization.
-[Click here](https://github.com/Paradigm4/variant_warehouse/tree/master/load_1000g) for more information.
-
-### load_ESP: for the Exome Sequencing Project Dataset
-Scripts to load ESP data, similar to load_1000g in nature.
-
-### load_gvcf: for the GVCF format
+ * load_gene_37: simple gene symbols and positions according to GRCh37
+ * load_1000g: the 1000 Genomes Project phase 3: http://www.1000genomes.org/
+ * load_esp: the Exome Sequencing Project: http://evs.gs.washington.edu/EVS/
+ * load_dbnsfp: the dbNSFP Project: https://sites.google.com/site/jpopgen/dbNSFP
+ * load_gvcf: for the Broad's GVCF format: https://www.broadinstitute.org/gatk/guide/article?id=4017
 
 Below are examples of demonstration code for variant processing use cases. 
+
 ##Use Case Demonstration
 
 ### vcf_toolkit.R
@@ -40,7 +33,7 @@ Some sample queries in AFL, including grouped allele count and a join of ESP and
 A variant browser app that computes allele counts grouped by major population and makes an interactive plot.
 
 ### AMI
-Some older VCF examples are shown in the Bioinformatics AMI. Instructions for that are here: http://www.paradigm4.com/try_scidb/
+Some examples are shown in the Bioinformatics AMI. Last updated June 2015. Instructions for that are here: http://www.paradigm4.com/try_scidb/
 
 ##Spark Benchmark
 
