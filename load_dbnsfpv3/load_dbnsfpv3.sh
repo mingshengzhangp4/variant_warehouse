@@ -44,7 +44,7 @@ function error()
 
 cleanup
 
-NUM_CHROMOSOMES=`(iquery -otsv -aq "op_count(DBNSFP_CHROMOSOME)" > /dev/null 2>&1 && echo 1) || echo 0`
+NUM_CHROMOSOMES=`(iquery -otsv -aq "op_count(DBNSFP_V3_CHROMOSOME)" > /dev/null 2>&1 && echo 1) || echo 0`
 if [ $NUM_CHROMOSOMES -ne 1 ] ; then
   error "Did not find the expected chromosome array. Did you run recreate_dbnsfp.sh first?"
 fi
@@ -80,7 +80,7 @@ insert(
      'num_attributes=112',
      'chunk_size=10000'
     ),
-    DBNSFP_CHROMOSOME,
+    DBNSFP_V3_CHROMOSOME,
     a0, chromosome_id
    ),
    pos                               , dcast(a1   ,int64(null)),
@@ -195,12 +195,12 @@ insert(
    clinvar_trait                     , a110   ,
    Interpro_domain                   , trim(a111, int_to_char(13))   -- silly DOS style carriage returns. Come on now!
   ),
-  DBNSFP_VARIANT
+  DBNSFP_V3_VARIANT
  ),  
- DBNSFP_VARIANT
+ DBNSFP_V3_VARIANT
 )"
 
-delete_old_versions DBNSFP_VARIANT
+delete_old_versions DBNSFP_V3_VARIANT
 cleanup
 
 log "Done"

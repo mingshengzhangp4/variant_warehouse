@@ -1,15 +1,15 @@
 #!/bin/bash
 
 iquery --ignore-errors -anq "
-remove(DBNSFP_CHROMOSOME);
-remove(DBNSFP_VARIANT);
+remove(DBNSFP_V3_CHROMOSOME);
+remove(DBNSFP_V3_VARIANT);
 
-create array DBNSFP_CHROMOSOME
+create array DBNSFP_V3_CHROMOSOME
 < chromosome:string not null>
 [ chromosome_id ];
-store(build(DBNSFP_CHROMOSOME, '[(1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12),(13),(14),(15),(16),(17),(18),(19),(20),(21),(22),(X),(Y),(M)]', true), DBNSFP_CHROMOSOME);
+store(build(DBNSFP_V3_CHROMOSOME, '[(1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12),(13),(14),(15),(16),(17),(18),(19),(20),(21),(22),(X),(Y),(M)]', true), DBNSFP_V3_CHROMOSOME);
 
-create array DBNSFP_VARIANT
+create array DBNSFP_V3_VARIANT
 < ref                               :string null,
   alt                               :string null,
   aaref                             :string null,

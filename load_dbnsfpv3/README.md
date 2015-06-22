@@ -1,7 +1,7 @@
-load_dbnsfp
+load_dbnsfpv3
 =========
 
-An example loader script and schema for the dbNSFP dataset. 
+An example loader script and schema for the dbNSFP dataset, version 3.0b2c.
 For more information about the project, please visit http://www.sites.google.com/site/jpopgen/dbNSFP
 Please consult the website for terms of use for dbNSFP and related data.
 
@@ -15,8 +15,8 @@ Example workflow:
  
  1. install and start scidb
  2. install load_tools (see http://github.com/paradigm4/load_tools)
- 3. ./recreate_db.sh
- 4. ./load_file.sh [dbNSFP file]
- 5. iquery -aq "project(between(DBNSFP_VARIANT, 9,422860,null, 9,422870,null), ref, alt, SIFT_converted_rankscore, MutationAssessor_rankscore)"
+ 3. ./recreate_dbnsfpv3.sh
+ 4. ./load_dbnsfpv3.sh [dbNSFP file]
+ 5. iquery -aq "project(between(DBNSFP_V3_VARIANT, 9,422860,null, 9,422870,null), ref, alt, SIFT_converted_rankscore, MutationAssessor_rankscore)"
  
 Note: dbnsfp version 3 is created using the GRCh38 reference assembly. The other datasets in this repostory use 37.
