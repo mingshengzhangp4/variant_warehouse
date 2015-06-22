@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ $# -ne 1 ]; then
+ echo "Please provide a single input file"
+ exit 1
+fi
+
 FILE=$1
 filedir=`dirname $FILE`
 pushd $filedir >> /dev/null

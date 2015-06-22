@@ -16,7 +16,8 @@ These scripts were created for SciDB 14.12 or newer. The larger the cluster - th
  * load_gene_37: simple gene symbols and positions according to GRCh37
  * load_1000g: the 1000 Genomes Project phase 3: http://www.1000genomes.org/
  * load_esp: the Exome Sequencing Project: http://evs.gs.washington.edu/EVS/
- * load_dbnsfp: the dbNSFP Project: https://sites.google.com/site/jpopgen/dbNSFP
+ * load_dbnsfpv2.9: the dbNSFP Project (version 2.9): https://sites.google.com/site/jpopgen/dbNSFP
+ * load_dbnsfpv3: the dbNSFP Project (version 3.0)
  * load_gvcf: for the Broad's GVCF format: https://www.broadinstitute.org/gatk/guide/article?id=4017
 
 Below are examples of demonstration code for variant processing use cases. 
