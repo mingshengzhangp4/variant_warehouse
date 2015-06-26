@@ -33,6 +33,9 @@ Some sample queries in AFL, including grouped allele count and a join of ESP and
 ### shiny_browser
 A variant browser app that computes allele counts grouped by major population and makes an interactive plot.
 
+### shiny_tcga_dbnsfp
+An app that can filter and plot TCGA alteration frequencies filtered against dbNSFP scores, as well as clinical keywords. You need to have TCGA data loaded in order to run it - you can use the AMI, for example.
+
 ### AMI
 Some examples are shown in the Bioinformatics AMI. Last updated June 2015. Instructions for that are here: http://www.paradigm4.com/try_scidb/
 
