@@ -126,6 +126,7 @@ full_lof_query = function(tumors     = c('BRCA'),
                           score_name                = "SIFT_converted_rankscore",
                           score_threshold           = 0.551)
 {
+  t1=proc.time();
   alts   = get_lof_data(tumors, clin_regex, gene_list, KG_AF_threshold, score_name, score_threshold)
   gene   = alts$gene
   sample = alts$sample
@@ -143,8 +144,8 @@ full_lof_query = function(tumors     = c('BRCA'),
   reupload = as.scidb(data.frame(sample_id, gene_id), types=c("int64", "int64"))
   reupload = bind(reupload, "mutated", "true")
   reupload = redimension(reupload, sprintf("<mutated:bool> 
-                                           [gene_id=1:%i,100,0, sample_id=1:%i,100,0]", num_genes, num_samples))
-  reupload = scidb(sprintf("merge(%s, build(<x: bool> [gene_id=1:%i,100,0, sample_id=1:%i, 100, 0], false))", reupload@name, num_genes, num_samples))
+                                           [gene_id=1:%i,250,0, sample_id=1:%i,250,0]", num_genes, num_samples))
+  reupload = scidb(sprintf("merge(%s, build(<x: bool> [gene_id=1:%i,250,0, sample_id=1:%i, 250, 0], false))", reupload@name, num_genes, num_samples))
   reupload = scidbeval(reupload, temp=TRUE)
   
   triangle = scidbeval(scidb(
@@ -197,4 +198,6 @@ full_lof_query = function(tumors     = c('BRCA'),
                               pval          = fisher_result$pval,
                               estimate      = fisher_result$estimate)                          
   result = list(alts, fisher_result)
+  print(proc.time()-t1)
+  return(result)
 }
