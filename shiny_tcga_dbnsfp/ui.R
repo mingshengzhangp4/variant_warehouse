@@ -54,7 +54,7 @@ shinyUI(fluidPage(
        ),
        tabPanel('Fisher Network',
         simpleNetworkOutput('networkPlot'),
-        sliderInput('pval', label = 'p value threshold', min = 0.0005, max = 0.05, step = 0.0005, value = 0.001)
+        sliderInput('pval', label = 'p value threshold', min = 0.0005, max = 0.2, step = 0.0005, value = 0.001)
        )),
        width = 8
      )
