@@ -78,7 +78,14 @@ Total alterations: %i, Samples: %i, Unique alterations: %i
     p <- input$pval
     a <- data.frame(lof_data()[2])
     x <- a[a$pval < p, c(1,2,7)]
-    simpleNetwork(x[,1:2],width=400,height=700, fontSize=12)
+    
+    edge_color = sapply(a[a$pval<p, 8],  FUN=function(x){ if(x<1) {"red"} else {"green"}})
+    simpleNetwork(x[,1:2],
+                  width=600,
+                  height=800, 
+                  linkDistance=100,
+                  charge = -400,
+                  fontSize=12, 
+                  linkColour=edge_color)
   })
-  
 })
