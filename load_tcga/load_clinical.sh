@@ -13,10 +13,17 @@ TUMOR=$2
 DATE_SHORT=`echo $DATE | sed -s "s/_//g"`
 echo $DATE_SHORT
 
+#We found sometimes the "merged" file has NA fields where one of the other files has the same fields populated for the same key!!!
+#Sadface.
+#So our approach is to cat all the files into one, load that, then pick values on all non-NA keys.
+
 wget http://gdac.broadinstitute.org/runs/stddata__${DATE}/data/${TUMOR}/${DATE_SHORT}/gdac.broadinstitute.org_${TUMOR}.Merge_Clinical.Level_1.${DATE_SHORT}00.0.0.tar.gz
 tar -zxvf gdac.broadinstitute.org_${TUMOR}.Merge_Clinical.Level_1.${DATE_SHORT}00.0.0.tar.gz
 
 MYDIR=`pwd`
+
+#Also, ESCA has an auxiliary file that breaks the pattern. Dont load that for now.
+rm $MYDIR/gdac.broadinstitute.org_${TUMOR}.Merge_Clinical.Level_1.${DATE_SHORT}00.0.0/*auxiliary*
 
 CLIN_FILE=$MYDIR/clinical.txt
 cat $MYDIR/gdac.broadinstitute.org_${TUMOR}.Merge_Clinical.Level_1.${DATE_SHORT}00.0.0/${TUMOR}.*txt | tail -n +2  > $CLIN_FILE
