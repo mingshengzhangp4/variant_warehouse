@@ -106,7 +106,7 @@ insert(
       filter(
        index_lookup(
         input(<patient_name:string>[z=0:*,1000000,0], '$MYDIR/patients.tsv', 0, 'tsv') as A,
-        redimension(TCGA_2015_06_01_PATIENT_STD, <patient_name:string> [patient_id=0:*,1000000,0]) as B,
+        redimension(TCGA_${DATE}_PATIENT_STD, <patient_name:string> [patient_id=0:*,1000000,0]) as B,
         A.patient_name, 
         pid
        ),
@@ -114,7 +114,7 @@ insert(
       ),
       patient_no
      ),
-     aggregate( apply(TCGA_2015_06_01_PATIENT_STD, pid, patient_id), max(pid) as mpid)
+     aggregate( apply(TCGA_${DATE}_PATIENT_STD, pid, patient_id), max(pid) as mpid)
     ),
     ttn, '${TUMOR}',
     patient_id, iif(mpid is null, patient_no, mpid+1+patient_no)
