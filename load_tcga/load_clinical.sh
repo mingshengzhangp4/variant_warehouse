@@ -123,7 +123,7 @@ insert(
    ttn,
    tumor_type_id
   ),
-  TCGA_${DATE}_PATIENT_STD
+  TCGA_${DATE}_PATIENT_STD 
  ),
  TCGA_${DATE}_PATIENT_STD
 )"
@@ -172,7 +172,8 @@ insert(
    build(<val:string>[i=0:0,1,0], 'NA'),
    key
   ),
-  TCGA_${DATE}_CLINICAL_STD
+  TCGA_${DATE}_CLINICAL_STD,
+  false
  ),
  TCGA_${DATE}_CLINICAL_STD
 )"
