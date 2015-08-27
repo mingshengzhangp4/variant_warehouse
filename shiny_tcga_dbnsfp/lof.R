@@ -102,20 +102,26 @@ get_lof_data = function( tumors     = c('BRCA'),
 )", DBNSFP@name, MUTATION@name, GENE@name, gene_filter, SAMPLE@name, CLINICAL@name, clin_filter, TUMOR_TYPE@name, tumor_filter, outer_filter)
   res = iqdf(query, n=Inf)
   
-  res2 = data.frame(
-       sprintf("%i:%i %s > %s",
-        res$chromosome_id + 1,
-        res$pos,
-        res$ref,
-        res$alt
-       ),
-       res$tumor_type_name,
-       res$sample_name,
-       res$gene_symbol
+  if(is.null(res) || nrow(res) == 0)
+  {
+    res2 = data.frame(variant = c(), tumor=c(), sample=c(), gene=c())
+  }
+  else
+  {
+    res2 = data.frame(
+      sprintf("%i:%i %s > %s",
+              res$chromosome_id + 1,
+              res$pos,
+              res$ref,
+              res$alt
+      ),
+      res$tumor_type_name,
+      res$sample_name,
+      res$gene_symbol
     )
-  names(res2) = c("variant", "tumor", "sample", "gene")
-  res2 = unique(res2)
-  
+    names(res2) = c("variant", "tumor", "sample", "gene")
+    res2 = unique(res2)  
+  }
   return(res2)
 }
 
@@ -133,10 +139,23 @@ full_lof_query = function(tumors     = c('BRCA'),
   tumor  = alts$tumor
   num_rows    = nrow(alts)
   num_tumors  = length(levels(tumor))
-  
   unique_gene   = levels(gene)
   unique_sample = levels(sample)
-  num_genes     = length(unique_gene)
+  num_genes     = length(unique_gene)  
+  if(num_rows == 0 || num_genes <= 1) 
+  {
+    fisher_result = data.frame( gene_1 = c('NO'),
+                                gene_2 = c('DATA'),
+                                mutated_both  = c(1),
+                                mutated_left  = c(1),
+                                mutated_right = c(1),
+                                not_mutated   = c(1),
+                                pval          = c(0.01),
+                                estimate      = c(1))
+    res = list(alts, fisher_result)
+    return(res)
+  }
+  
   num_samples   = length(unique_sample)
   gene_id       = match(gene,  unique_gene) 
   sample_id     = match(sample,unique_sample)
