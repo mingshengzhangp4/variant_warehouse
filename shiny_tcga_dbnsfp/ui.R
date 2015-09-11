@@ -25,7 +25,7 @@ shinyUI(fluidPage(
       selectInput('tumor_list', 'Tumor Types', tumor.type, multiple=TRUE, selectize=TRUE, 
                   selected=c("BRCA")),
       selectInput('gene_list',  'Genes',       gene.symbol, multiple=TRUE, selectize=TRUE, 
-                  selected=c('TP53', 'CDH1', 'PIK3CA', 'ERBB2', 'NRAS', 'FLT1', 'FLT3', 'HER2', 'NOTCH1', 'NOTCH2', 'KRAS', 'NRAS', 'LRP1B', 'BRAF', 'ERBB4', 'PTEN', 'EGFR')
+                  selected=c('DCK', 'RNR1' , 'RNR2', 'RNR3', 'RNR4', 'RNR5', 'SLC29A1', 'SLC29A2', 'SLC29A3', 'NOTCH1', 'NOTCH2')
       ),
       textInput  ('clin_regex', 'Clinical match'),
       sliderInput('kg_af_threshold', '1000G Max AF', min=0, max=1, step=0.01, value=0.1),

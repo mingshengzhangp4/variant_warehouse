@@ -343,7 +343,7 @@ iquery -anq "
 insert(
  redimension(
   apply(
-   materialize(
+   _materialize(
     apply(
      cross_join(
       between(

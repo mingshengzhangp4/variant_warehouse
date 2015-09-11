@@ -24,19 +24,30 @@ shinyServer(function(input, output, session) {
   
   output$output_text <- renderUI({
     res <- data.frame(lof_data()[1])
-    result = sprintf("
+    if(is.null(res) || nrow(res) == 0)
+    {
+      result = "No alterations found."
+    }
+    else
+    {
+      result = sprintf("
 Total alterations: %i, Samples: %i, Unique alterations: %i
 <br/>
 <table>",   nrow(res), length(unique(res$sample)), length(unique(res$variant)))
-    summary = data.frame(table(res[c("tumor")]))
-    result = sprintf("%s %s", result, paste(sprintf("<tr> <td> %s:&nbsp;</td> <td>%i</td></td>", summary[,1], summary[,2]), collapse=" "))
-    result = sprintf("%s </table>", result)
+      summary = data.frame(table(res[c("tumor")]))
+      result = sprintf("%s %s", result, paste(sprintf("<tr> <td> %s:&nbsp;</td> <td>%i</td></td>", summary[,1], summary[,2]), collapse=" "))
+      result = sprintf("%s </table>", result)
+    }
     return(HTML(result))
   })
   
   output$main_plot <- renderPlot({
     result= data.frame(lof_data()[1])
-    if (input$plot_style == "sample / gene")
+    if(nrow(result) == 0)
+    {
+      frame()
+    }
+    else if (input$plot_style == "sample / gene")
     {
       reduced = data.frame(table(result[c("sample","gene")]))
       ggplot(data = reduced)  + theme_bw() +aes(y=sample, x=gene, fill=Freq) + geom_tile()  
@@ -77,10 +88,9 @@ Total alterations: %i, Samples: %i, Unique alterations: %i
   output$networkPlot <- renderSimpleNetwork({
     p <- input$pval
     a <- data.frame(lof_data()[2])
-    x <- a[a$pval < p, c(1,2,7)]
-    
-    edge_color = sapply(a[a$pval<p, 8],  FUN=function(x){ if(x<1) {"red"} else {"green"}})
-    simpleNetwork(x[,1:2],
+      x <- a[a$pval < p, c(1,2,7)]
+      edge_color = sapply(a[a$pval<p, 8],  FUN=function(x){ if(x<1) {"red"} else {"green"}})
+      simpleNetwork(x[,1:2],
                   width=600,
                   height=800, 
                   linkDistance=100,
@@ -88,4 +98,5 @@ Total alterations: %i, Samples: %i, Unique alterations: %i
                   fontSize=12, 
                   linkColour=edge_color)
   })
+  
 })
