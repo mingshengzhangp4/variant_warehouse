@@ -37,11 +37,14 @@ ADAMTS14|140766         75.4803                          123.9804               
 **  scidb arrays **
 
 update/insert: TCGA_{DATE}_SAMPLE_STD
-update/insert: TCGA_{GATE}_SAMPLE_STD
+update/insert: TCGA_{GATE}_GENE_STD
 generate new array: TCGA_{DATE}_RNAseqV2_STD
     <RNAexpression_levl:string null>[sample_id=0:*, 1000000, 0, gene_id=0:*,10000,0]
 
+entrez_geneID will be used for dimension gene_id. So we need to create an array with schema-
 
+<entrezID:uint64, hgnc_symbol:string null, ....>
+[geneIndex=0:*, 1000000, 0]
 
 
 
