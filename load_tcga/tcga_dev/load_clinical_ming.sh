@@ -10,10 +10,12 @@ TUMOR=$2
 
 #DATE="2015_06_01"
 #TUMOR="BRCA"
+
+
 DATE_SHORT=`echo $DATE | sed -s "s/_//g"`
 echo $DATE_SHORT
 
-path_downloaded=/home/jrivers/Documents/tcga_mut
+path_downloaded=/home/mzhang/Documents/tcga_download
 
 
 #We found sometimes the "merged" file has NA fields where one of the other files has the same fields populated for the same key!!!
@@ -23,7 +25,7 @@ path_downloaded=/home/jrivers/Documents/tcga_mut
 # wget -P ${path_downloaded} http://gdac.broadinstitute.org/runs/stddata__${DATE}/data/${TUMOR}/${DATE_SHORT}/gdac.broadinstitute.org_${TUMOR}.Merge_Clinical.Level_1.${DATE_SHORT}00.0.0.tar.gz
 
 
-#  tar -zxvf ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_Clinical.Level_1.${DATE_SHORT}00.0.0.tar.gz --directory ${path_downloaded}
+# tar -zxvf ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_Clinical.Level_1.${DATE_SHORT}00.0.0.tar.gz --directory ${path_downloaded}
 
 
 echo "unzipped tar.gz. Continue?"
@@ -56,7 +58,7 @@ done
 CLIN_NUM_COLUMNS=`cat $CLIN_FILE | awk  -F '\t' '{print NF}' | head -n 1`
 
 
-#echo $CLIN_NUM_COLUMNS
+echo $CLIN_NUM_COLUMNS
 echo "found column number. Continue?"
 select yn in "yes" "no"; do
     case $yn in
@@ -69,33 +71,33 @@ done
 
 
 
-## iquery -anq "remove(TCGA_CLIN_LOAD_BUF)"    > /dev/null 2>&1
-## iquery -anq "create temp array TCGA_CLIN_LOAD_BUF
-## <field:string null>
-## [source_instance_id = 0:*,1,0,
-##  chunk_number       = 0:*,1,0,
-##  line_number        = 0:*,1000,0,
-##  column_number      = 0:$CLIN_NUM_COLUMNS, $((CLIN_NUM_COLUMNS+1)), 0]"
-
-
-echo "set up template array TCGA_CLIN_LOAD_BUF. Continue?"
-select yn in "yes" "no"; do
-    case $yn in
-        yes) break;;
-        no ) exit 1;;
-    esac
-done
-
-
-##  iquery -anq "
-##  store(
-##   parse(
-##    split('$CLIN_FILE', 'header=0', 'lines_per_chunk=1000'),
-##    'chunk_size=1000', 'split_on_dimension=1', 'num_attributes=$CLIN_NUM_COLUMNS'
-##   ),
-##   TCGA_CLIN_LOAD_BUF
-##  )" 
-
+#   iquery -anq "remove(TCGA_CLIN_LOAD_BUF)"    > /dev/null 2>&1
+#   iquery -anq "create temp array TCGA_CLIN_LOAD_BUF
+#   <field:string null>
+#   [source_instance_id = 0:*,1,0,
+#    chunk_number       = 0:*,1,0,
+#    line_number        = 0:*,1000,0,
+#    column_number      = 0:$CLIN_NUM_COLUMNS, $((CLIN_NUM_COLUMNS+1)), 0]"
+#  
+#  
+#  echo "set up template array TCGA_CLIN_LOAD_BUF. Continue?"
+#  select yn in "yes" "no"; do
+#      case $yn in
+#          yes) break;;
+#          no ) exit 1;;
+#      esac
+#  done
+#  
+#  
+#    iquery -anq "
+#    store(
+#     parse(
+#      split('$CLIN_FILE', 'header=0', 'lines_per_chunk=1000'),
+#      'chunk_size=1000', 'split_on_dimension=1', 'num_attributes=$CLIN_NUM_COLUMNS'
+#     ),
+#     TCGA_CLIN_LOAD_BUF
+#    )" 
+#  
 
 echo "populated array TCGA_CLIN_LOAD_BUF. Continue?"
 select yn in "yes" "no"; do
@@ -144,19 +146,19 @@ select yn in "yes" "no"; do
 done
 
 
-##  PATIENTS_LOCATION=`iquery -ocsv -aq "project(unpack(filter(between(TCGA_CLIN_LOAD_BUF, null, null, null, 0, null, null, null, 0), field='patient.bcr_patient_barcode'), z), chunk_number, line_number)" | tail -n 1`
-##   
-##  
-##  echo "patients_location:"
-##  echo ${PATIENTS_LOCATION}
-##  echo "got PATIENTS_LOCATION. Continue?"
-##  select yn in "yes" "no"; do
-##      case $yn in
-##          yes) break;;
-##          no ) exit 1;;
-##      esac
-##  done
-##  
+  PATIENTS_LOCATION=`iquery -ocsv -aq "project(unpack(filter(between(TCGA_CLIN_LOAD_BUF, null, null, null, 0, null, null, null, 0), field='patient.bcr_patient_barcode'), z), chunk_number, line_number)" | tail -n 1`
+   
+  
+  echo "patients_location:"
+  echo ${PATIENTS_LOCATION}
+  echo "got PATIENTS_LOCATION. Continue?"
+  select yn in "yes" "no"; do
+      case $yn in
+          yes) break;;
+          no ) exit 1;;
+      esac
+  done
+  
 ##  echo "Generate patients_list?"
 ##  select yn in "yes" "no"; do
 ##      case $yn in
@@ -203,14 +205,14 @@ done
 ##   TCGA_CLIN_KEYS
 ##  )"
 ##  
-##  echo "Done. Continue?"
-##  select yn in "yes" "no"; do
-##      case $yn in
-##          yes) break;;
-##          no ) exit 1;;
-##      esac
-##  done
-##  
+  echo "Done. Continue?"
+  select yn in "yes" "no"; do
+      case $yn in
+          yes) break;;
+          no ) exit 1;;
+      esac
+  done
+  
 
 echo "Insert new patients?"
 select yn in "yes" "no"; do

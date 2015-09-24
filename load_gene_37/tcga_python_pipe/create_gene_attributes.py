@@ -1,12 +1,15 @@
 import re, os, subprocess
 
 ##  Sept 10, 2015
+
+## Revised: Sept 24, 2015
+
 ##  -------------------
 ##  Generate gene table
 ##  -------------------
 ##  
 ##  .. table fields ..
-##  HGNC_symbol gene_start(1) gene_end(1) strand(1) hgnc_synonyms(2) Synonyms dbXrefs cyto_genetic_loc Full_name_from_nomenclature_authority Type_of_gene chrom other_locations(1)
+##  HGNC_symbol entrez_geneID gene_start(1) gene_end(1) strand(1) hgnc_synonyms(2) Synonyms dbXrefs cyto_genetic_loc Full_name_from_nomenclature_authority Type_of_gene chrom other_locations(1)
 ##  
 ##      all fields extracted from Homo_sapiens.gene_info (key:: $3/Symbol: SYMBOL), except:
 ##      (1)  ref_GRCh37.p5_top_level.gff3 (Key:: $9/Attributes: Name=SYMBOL)
@@ -21,6 +24,10 @@ import re, os, subprocess
 
 
 def extract_export_entries(file_path='/development/javaworkspace/tcga_data', f_in = 'ref_GRCh37.p5_top_level.gff3', f_out = 'gff3_genes.txt', pattern = "RefSeq\sgene\s"):
+    
+    ## implement bash pipe:
+    ## cat ref_GRCh37.p5_top_level.gff3|grep -e "RefSeq\sgene\s" > gff3_genes.txt
+
     f_in_full_path = file_path + '/' + f_in
     f_out_full_path = file_path + '/' + f_out
     fout = open(f_out_full_path, "w")
@@ -108,7 +115,7 @@ def parse_hSapiens():
     gene_hSynonym_dict = parse_hgnc()
     fout = open('/development/javaworkspace/tcga_data/newGene.tsv','w')
 
-    headerList = ['hgnc_symbol', 'Start', 'End', 'Strand', 'hgnc_synonym', 'ncbi_synonym', 'dbXrefs','cyto_band', 'full_name', 'Type_of_gene','chromosome', 'other_locations']
+    headerList = ['hgnc_symbol', 'entrez_geneID', 'Start', 'End', 'Strand', 'hgnc_synonym', 'ncbi_synonym', 'dbXrefs','cyto_band', 'full_name', 'Type_of_gene','chromosome', 'other_locations']
     headerLine = '\t'.join(headerList)
     fout.write(headerLine + '\n')
     with open(fin_full_path, 'r') as fin:
@@ -116,6 +123,7 @@ def parse_hSapiens():
         for aline in fin:
             alist = [item.strip() for item in re.split('\t', aline)]
             ##raw_input(alist)
+            entrez_geneID = alist[1]
             gene_symbol = alist[2]
             synonym = alist[4]
             if synonym == '-':
@@ -140,7 +148,7 @@ def parse_hSapiens():
                 hgnc_synonym = gene_hSynonym_dict[gene_symbol]
             except:
                 hgnc_synonym = '_'
-            newList = [gene_symbol, start_, end_, strand_, hgnc_synonym,  synonym, dbXrefs, cyto_band, full_name, type_of_gene, chrom, other_locations]
+            newList = [gene_symbol, entrez_geneID, start_, end_, strand_, hgnc_synonym,  synonym, dbXrefs, cyto_band, full_name, type_of_gene, chrom, other_locations]
             newLine = '\t'.join(newList)
             fout.write(newLine + '\n')
     fout.close()     

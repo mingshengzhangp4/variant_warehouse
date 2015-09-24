@@ -1,12 +1,24 @@
 #!/bin/bash
 
-./recreate_db_ming.sh
+#  ./recreate_db_ming.sh
 
 ##  for tumor_type in `cat tumor_type.tsv`; do
 ##    ./load_clinical.sh 2015_06_01 $tumor_type
 ##  done
 
-./load_mutation_ming.sh 2015_06_01 ACC 39 40
+
+
+bash ./load_mutation_ming.sh 2015_06_01 ACC 39 40
+
+  echo "completed one tumor type..."
+  select yn in "yes" "no"; do
+      case $yn in
+          yes) break;;
+          no ) exit 1 ;;
+      esac
+  done
+
+
 ./load_mutation_ming.sh 2015_06_01 BLCA 40 42
 ./load_mutation_ming.sh 2015_06_01 BRCA 49 50
 ./load_mutation_ming.sh 2015_06_01 CESC 49 50

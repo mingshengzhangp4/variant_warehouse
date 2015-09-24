@@ -1,6 +1,11 @@
 
 Sept-08, 2015
 
+revised Sept-24, 2015
+    -- To include entrez geneID as an attribute of a gene;
+    -- solve the problem of gene symbol synonym ambiguilty
+
+
 Paradigm4, waltham, MA
 
 Customer Solution Group
@@ -196,7 +201,7 @@ Generate gene table
 -------------------
 
 .. table fields ..
-HGNC_symbol gene_start(1) gene_end(1) strand(1) hgnc_synonyms(2) Synonyms dbXrefs cyto_genetic_loc Full_name_from_nomenclature_authority Type_of_gene chrom other_locations(1)
+HGNC_symbol entrez_gene_ID gene_start(1) gene_end(1) strand(1) hgnc_synonyms(2) Synonyms dbXrefs cyto_genetic_loc Full_name_from_nomenclature_authority Type_of_gene chrom other_locations(1)
 
     all fields extracted from Homo_sapiens.gene_info (key:: $3/Symbol: SYMBOL), except:
     (1)  ref_GRCh37.p5_top_level.gff3 (Key:: $9/Attributes: Name=SYMBOL)
@@ -208,3 +213,7 @@ HGNC_symbol gene_start(1) gene_end(1) strand(1) hgnc_synonyms(2) Synonyms dbXref
     - Parse Homo_sapiens.gene_info, and call the above two dicts, generate gene attribute file output
 .. source file ..
    ~/poctrunk/poc/TCGA/paradigm4_tcga/tcga_python_pipe/create_gene_attributes.py
+   or
+   ~/Paradigm4_labs/variant_warehouse/load_gene_37/tcga_python_pipe/create_gene_attributes.py
+   or
+   http://github.com/Paradigm4/variant_warehouse/load_gene_37/tcga_python_pipe/create_gene_attributes.py

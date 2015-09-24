@@ -1,44 +1,144 @@
 #!/bin/bash
 
-if [ $# -ne 4 ]; then
- echo "Need 4 arguments: date, tumor, C_pos,P_pos"
+if [ $# -ne 2 ]; then
+ echo "Need 4 arguments: date, tumor"
  exit 1
 fi
 
 DATE=$1
 TUMOR=$2
-C_pos=$3
-P_pos=$4
+## C_pos=$3
+## P_pos=$4
 
 
 DATE_SHORT=`echo $DATE | sed  "s/_//g"`
 echo $DATE_SHORT
 
+
+
+iquery -anq "create array TCGA_${DATE}_RNAseqV2_STD
+<expression:string null>
+[tumor_type_id = 0:*,1000000,0,
+ sample_id = 0:*,1000,0,
+ gene_id = 0:*, 10000, 0]"
+
+
+
 path_downloaded=/home/mzhang/Documents/tcga_download
 
 ##  gdac.broadinstitute.org_UVM.Mutation_Packager_Calls.Level_3.2015060100.0.0.tar.gz
 
- wget -P /home/mzhang/Documents/tcga_download  http://gdac.broadinstitute.org/runs/stddata__${DATE}/data/${TUMOR}/${DATE_SHORT}/gdac.broadinstitute.org_${TUMOR}.Mutation_Packager_Calls.Level_3.${DATE_SHORT}00.0.0.tar.gz
+
+## wget http://gdac.broadinstitute.org/runs/stddata__2015_06_01/data/BRCA/20150601/gdac.broadinstitute.org_BRCA.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.2015060100.0.0.tar.gz
 
 
 
- tar -zxvf /home/mzhang/Documents/tcga_download/gdac.broadinstitute.org_${TUMOR}.Mutation_Packager_Calls.Level_3.${DATE_SHORT}00.0.0.tar.gz --directory /home/mzhang/Documents/tcga_download/
+##wget -P /home/mzhang/Documents/tcga_download  http://gdac.broadinstitute.org/runs/stddata__${DATE}/data/${TUMOR}/${DATE_SHORT}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0.tar.gz
+##
+##  echo "downloaded RNAseq file..."
+##  select yn in "yes" "no"; do
+##      case $yn in
+##          yes) break;;
+##          no ) exit 1 ;;
+##      esac
+##  done
+ 
+
+##  tar -zxvf /home/mzhang/Documents/tcga_download/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0.tar.gz --directory /home/mzhang/Documents/tcga_download/
 
 
- AWK_STRING='{print $16 "\t" $1 "\t" $4 "\t" $6 "\t" $7 "\t" $9 "\t" $10 "\t" $11 "\t" $12 "\t" $13 "\t" $'$C_pos' "\t" $'$P_pos'}'
+ ## echo "extracted RNAseq file..."
+ ## select yn in "yes" "no"; do
+ ##     case $yn in
+ ##         yes) break;;
+ ##         no ) exit 1 ;;
+ ##     esac
+ ## done
+ 
+
+
+
+##  AWK_STRING='{print $16 "\t" $1 "\t" $4 "\t" $6 "\t" $7 "\t" $9 "\t" $10 "\t" $11 "\t" $12 "\t" $13 "\t" $'$C_pos' "\t" $'$P_pos'}'
 
 ## AWK_STRING='{print $16 "\t" $1 "\t" $4 "\t" $5 "\t" $6 "\t" $7 "\t" $9 "\t" $10 "\t" $11 "\t" $12 "\t" $13 "\t" $'$C_pos' "\t" $'$P_pos'}'
 
 
 ## rm "${path_downloaded}/${TUMOR}_mutation.tsv"
 
-  for file in `ls ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Mutation_Packager_Calls.Level_3.${DATE_SHORT}00.0.0 | grep -i maf`; do
-      cat ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Mutation_Packager_Calls.Level_3.${DATE_SHORT}00.0.0/$file | tail -n +2 | awk -F "\t" "${AWK_STRING}" >> "${path_downloaded}/${TUMOR}_mutation.tsv" 
+
+
+
+  for file in `ls ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0 | grep -i ${TUMOR}`; do
+      column_type=`cat ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0/$file | awk -F'\t' '{print NF}' |sort|uniq|wc|awk '{print $1}'`
+      if [ ${column_type} != 1 ]; then
+          echo "column disagree! "
+          exit 1
+      fi
   done
 
 
-  echo "generated tumor_mutation file..."
-  select yn in "yes" "no"; do
+ ## echo "RNAseqv2 files column matches..."
+ ## select yn in "yes" "no"; do
+ ##     case $yn in
+ ##         yes) break;;
+ ##         no ) exit 1 ;;
+ ##     esac
+ ## done
+ 
+
+    for file in `ls ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0 | grep -i ${TUMOR}`; do
+        column_no=`cat ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0/$file | awk -F'\t' '{print NF}' |head -n 1|awk '{print $1}'`
+   
+        echo "column_no is ${column_no} ..."
+        ##select yn in "yes" "no"; do
+        ##    case $yn in
+        ##        yes) break;;
+        ##        no ) exit 1 ;;
+        ##    esac
+        ##done
+  
+    done
+  
+  
+  
+  FILE=${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0/${TUMOR}.rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.data.txt
+   
+  
+  
+  
+   iquery -anq "remove(TCGA_RNAseq_LOAD_BUF)"    > /dev/null 2>&1
+    
+    
+    
+    iquery -anq "create temp array TCGA_RNAseq_LOAD_BUF
+    <expression:string null>
+    [source_instance_id = 0:*,1,0,
+     chunk_number       = 0:*,1,0,
+     line_number        = 0:*,1000,0,
+     col_number         = 0:$((column_no)), $((column_no+1)), 0]"
+    
+    
+  echo ${column_no} 
+    
+   ##iquery -aq "store(parse(split('$FILE', 'lines_per_chunk=1000'), 'chunk_size=1000','num_attributes=${column_no}'), temp1)" 
+  
+  
+  
+    iquery -anq "
+    store(
+     parse(
+      split('$FILE', 'header=0', 'lines_per_chunk=1000'),
+      'chunk_size=1000', 'split_on_dimension=1', 'num_attributes=$((column_no))'
+     ),
+     TCGA_RNAseq_LOAD_BUF
+    )" 
+   
+
+
+
+echo "loading temp array completed..."
+echo " continue to manipulate the LOAD_BUF..."
+   select yn in "yes" "no"; do
       case $yn in
           yes) break;;
           no ) exit 1 ;;
@@ -46,51 +146,35 @@ path_downloaded=/home/mzhang/Documents/tcga_download
   done
  
 
+between(TCGA_RNAseq_LOAD_BUF,null, null, null, 0, null, null, null,0) 
+##iquery -anq "remove(temp1)"
+##
+##  iquery -anq "create temp array temp1
+##  <expression:string null>
+##  [
+##   chunk_number       = 0:*,1,0,
+##   line_number        = 0:*,1000,0,
+##   col_number         = 0:$((column_no)), $((column_no+1)), 0]"
+## 
+##iquery -anq "store(redimension(TCGA_RNAseq_LOAD_BUF, temp1), temp1)"
+
+echo "redimesnion worked? ..."
+
+select yn in "yes" "no"; do
+    case $yn in 
+        yes) break;;
+        no ) exit 1;;
+    esac
+done 
+ 
+
+iquery -anq "between(temp1, null, null, null, 1, null, null, null, ${column_no}"
 
 
 
-  MYDIR=`pwd`
-
-FILE="${path_downloaded}/${TUMOR}_mutation.tsv"
 
 
-  iquery -anq "remove(TCGA_MUTATION_LOAD_BUF)"    > /dev/null 2>&1
-  
-  
-  
-  iquery -anq "create temp array TCGA_MUTATION_LOAD_BUF
-  <sample_:string null,
-   gene_:string null,
-   release_:string null,
-   chrom_:string null,
-   start_:string null,
-   end_:string null,
-   mtype_:string null,
-   type_: string null,
-   ref_: string null,
-   tumor_:string null,
-   tumor2_:string null,
-   c_pos_:string null,
-   p_pos_:string null,
-   error: string null>
-  [source_instance_id = 0:*,1,0,
-   chunk_number       = 0:*,1,0,
-   line_number        = 0:*,1000,0]"
-  
-  
-  
-  
-  iquery -anq "
-  store(
-   parse(
-    split('$FILE', 'lines_per_chunk=1000'),
-    'chunk_size=1000', 'num_attributes=13'
-   ),
-   TCGA_MUTATION_LOAD_BUF
-  )" 
-  
-  
-  
+ 
   #Insert new patients
   
   echo "so far so good. Insert new patients to TCGA_${DATE}_PATIENT_STD ?"
@@ -114,7 +198,7 @@ FILE="${path_downloaded}/${TUMOR}_mutation.tsv"
           filter(
            index_lookup(
              apply(
-              TCGA_MUTATION_LOAD_BUF,
+              TCGA_RNAseq_LOAD_BUF,
               patient_name, 
               substr(sample_, 0, 12)
              ) as A,
@@ -166,7 +250,7 @@ done
 ##         project(
 ##          filter(
 ##           index_lookup(
-##             TCGA_MUTATION_LOAD_BUF,
+##             TCGA_RNAseq_LOAD_BUF,
 ##             redimension(TCGA_${DATE}_GENE_STD, <gene_symbol:string> [gene_id=0:*,1000000,0]) as B,
 ##             gene_, 
 ##             gid
@@ -221,7 +305,7 @@ insert(
           filter(
            index_lookup(
              apply(
-              TCGA_MUTATION_LOAD_BUF,
+              TCGA_RNAseq_LOAD_BUF,
               sample_name, 
               substr(sample_, 0, 15)
              ) as A,
@@ -260,7 +344,7 @@ insert(
 )"
 
 
-echo "sfsg. insert new mutations in TCGA_${DATE}_MUTATION_STD ?"
+echo "sfsg. insert new mutations in TCGA_${DATE}_RNAseq_STD ?"
 select yn in "yes" "no"; do
     case $yn in
         yes) break;;
@@ -277,7 +361,7 @@ insert(
     index_lookup(
      index_lookup(
       apply(
-       TCGA_MUTATION_LOAD_BUF,
+       TCGA_RNAseq_LOAD_BUF,
        sample_name, substr(sample_, 0, 15),
        GRCh_release, release_,
        mutation_genomic_chr, chrom_,
@@ -310,9 +394,9 @@ insert(
    ),
    gene_id, iif(gene_id_ is null, 0, gene_id_)
   ),
-  TCGA_${DATE}_MUTATION_STD
+  TCGA_${DATE}_RNAseq_STD
  ),
- TCGA_${DATE}_MUTATION_STD
+ TCGA_${DATE}_RNAseq_STD
 )"
 
 ##echo "all done? clear the loading buffer?"
@@ -325,4 +409,4 @@ insert(
 
 
  
-iquery -anq "remove(TCGA_MUTATION_LOAD_BUF)"    > /dev/null 2>&1
+iquery -anq "remove(TCGA_RNAseq_LOAD_BUF)"    > /dev/null 2>&1
