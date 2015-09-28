@@ -54,6 +54,11 @@ iquery -aq "create array TCGA_${DATE}_MUTATION_STD
   sample_id=0:*,1000,0,
   mutation_id=0:*,100000,0]"
 
+iquery -aq "create array TCGA_${DATE}_RNAseqV2_STD
+ <RNA_expressionLevel:double null>
+ [tumor_type_id=0:*,1,0,
+  gene_id=0:*,10000,0,
+  sample_id=0:*,1000,0]"
 
 MYDIR=`pwd`
 iquery -anq "load(TCGA_${DATE}_SAMPLE_TYPE_STD, '$MYDIR/sample_type.tsv', 0, 'tsv')"
