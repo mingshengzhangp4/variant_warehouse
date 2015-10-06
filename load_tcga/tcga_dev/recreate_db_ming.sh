@@ -10,6 +10,7 @@ iquery -anq "remove(TCGA_${DATE}_PATIENT_STD)"      > /dev/null 2>&1
 iquery -anq "remove(TCGA_${DATE}_CLINICAL_STD)"     > /dev/null 2>&1
 iquery -anq "remove(TCGA_${DATE}_GENE_STD)"         > /dev/null 2>&1
 iquery -anq "remove(TCGA_${DATE}_MUTATION_STD)"     > /dev/null 2>&1
+iquery -anq "remove(TCGA_${DATE}_RNAseqV2_STD)"     > /dev/null 2>&1
 
 
 iquery -aq "create array TCGA_${DATE}_TUMOR_TYPE_STD  <tumor_type_name:string> [tumor_type_id]"
@@ -24,19 +25,23 @@ iquery -aq "create array TCGA_${DATE}_PATIENT_STD  <patient_name:string> [tumor_
 
 iquery -aq "create array TCGA_${DATE}_CLINICAL_STD <key:string,value:string null> [tumor_type_id=0:*,1,0,clinical_line_nbr=0:*,1000,0,patient_id=0:*,1000,0]"
 
-iquery -aq "create array TCGA_${DATE}_GENE_STD 
- <gene_symbol:string,
-  genomic_start:uint64,
-  genomic_end:uint64,
-  strand:char,
-  locus_tag:string,
-  synonyms:string,
-  dbXrefs:string,
-  map_location:string,
-  description:string,
-  type_of_gene:string,
-  chromosome_nbr:uint64> 
-[gene_id=0:*,10000,0]"
+iquery -anq "create array TCGA_${DATE}_GENE_STD
+<gene_symbol: string null,
+ entrez_geneID: uint64 null,
+ start_: string null,
+ end_: string null,
+ strand_: string null,
+ hgnc_synonym: string null,
+ synonym: string null,
+ dbXrefs: string null,
+ cyto_band: string null,
+ full_name: string null,
+ type_of_gene: string null,
+ chrom: string null,
+ other_locations: string null>
+[gene_id=0:*, 1000000,0]"
+
+
 
 iquery -aq "create array TCGA_${DATE}_MUTATION_STD
  <GRCh_release:string null,
@@ -50,31 +55,24 @@ iquery -aq "create array TCGA_${DATE}_MUTATION_STD
   c_pos_change:string null,
   p_pos_change:string null>
  [tumor_type_id=0:*,1,0,
-  gene_id=0:*,10000,0,
+  gene_id=0:*,1000000,0,
   sample_id=0:*,1000,0,
   mutation_id=0:*,100000,0]"
 
-iquery -aq "create array TCGA_${DATE}_RNAseqV2_STD
+
+iquery -anq "create array TCGA_${DATE}_RNAseqV2_STD
  <RNA_expressionLevel:double null>
  [tumor_type_id=0:*,1,0,
-  gene_id=0:*,10000,0,
-  sample_id=0:*,1000,0]"
+  sample_id=0:*,1000,0,
+  gene_id=0:*,1000000,0]"
+
+
 
 MYDIR=`pwd`
 iquery -anq "load(TCGA_${DATE}_SAMPLE_TYPE_STD, '$MYDIR/sample_type.tsv', 0, 'tsv')"
-
-
 iquery -anq "load(TCGA_${DATE}_TUMOR_TYPE_STD, '$MYDIR/tumor_type.tsv', 0, 'tsv')"
 
-
-iquery -anq "load(TCGA_${DATE}_GENE_STD, '$MYDIR/gene.tsv', 0, 'tsv')"
-
-##  echo "so far so good. Continue?"
-##  select yn in "yes" "no"; do
-##      case $yn in
-##          yes) break;;
-##          no) exit 1 ;;
-##      esac
-##  done
+# load gene list 
+bash load_gene.sh ${DATE} /home/scidb/mzhang/paradigm4_lab/variant_warehouse/load_gene_37/newGene.tsv
 
 

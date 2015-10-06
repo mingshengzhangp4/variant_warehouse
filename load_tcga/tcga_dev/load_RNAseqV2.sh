@@ -7,77 +7,57 @@ fi
 
 DATE=$1
 TUMOR=$2
-## C_pos=$3
-## P_pos=$4
-
 
 DATE_SHORT=`echo $DATE | sed  "s/_//g"`
 echo $DATE_SHORT
 
-iquery -anq "remove(TCGA_${DATE}_RNAseqV2_STD)"
+## iquery -anq "remove(TCGA_${DATE}_RNAseqV2_STD)"
 
-iquery -anq "create array TCGA_${DATE}_RNAseqV2_STD
- <RNA_expressionLevel:double null>
- [tumor_type_id=0:*,1,0,
-  sample_id=0:*,1000000,0,
-  gene_id=0:*,10000,0]"
-
-
-path_downloaded=/home/mzhang/Documents/tcga_download
+cwd=`pwd`
+path_downloaded=${cwd}/tcga_download
+mkdir -p ${path_downloaded}
 
 ####  gdac.broadinstitute.org_UVM.Mutation_Packager_Calls.Level_3.2015060100.0.0.tar.gz
-
-
 #### wget http://gdac.broadinstitute.org/runs/stddata__2015_06_01/data/BRCA/20150601/gdac.broadinstitute.org_BRCA.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.2015060100.0.0.tar.gz
 
 
 
-wget -P /home/mzhang/Documents/tcga_download  http://gdac.broadinstitute.org/runs/stddata__${DATE}/data/${TUMOR}/${DATE_SHORT}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0.tar.gz
+wget -P ${path_downloaded}  http://gdac.broadinstitute.org/runs/stddata__${DATE}/data/${TUMOR}/${DATE_SHORT}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0.tar.gz
 
-##  echo "downloaded RNAseq file..."
-##  select yn in "yes" "no"; do
-##      case $yn in
-##          yes) break;;
-##          no ) exit 1 ;;
-##      esac
-##  done
+
+
+  tar -zxvf ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0.tar.gz --directory ${path_downloaded}/
+
+echo "pause to check..."
+select yn in "yes" "no"; do
+    case $yn in
+        yes) break;;
+        no ) exit 1 ;;
+    esac
+done
+
+
+  ##  create intermediate tsv files for easy loading  ##
+  
+  RNAseqFile=${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0/${TUMOR}.rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.data.txt
+  
+  samplesFile=${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0/samples.tsv
+  
+  Entrez_samplesFile=${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0/Entrez_samples.tsv
+  
+  Entrez_geneList=${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0/Entrez_geneList.tsv
+  
+  RNAexpr=${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0/RNAexpression.tsv
+  
+  
+ # output must be one line per sample for 'input' operator to work, thus OFS='\n'
+ cat ${RNAseqFile} |head -1|awk -F'\t' -v OFS='\n' '{ for (i=2; i<=NF;i++)  print $i}' > ${samplesFile} 
  
-
-  tar -zxvf /home/mzhang/Documents/tcga_download/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0.tar.gz --directory /home/mzhang/Documents/tcga_download/
-
-
+ cat ${RNAseqFile}|awk 'NR>2'|awk -F'|' '{ for (i=2; i<=NF; i++) print $i}' > ${Entrez_samplesFile}
  
-
-##  create intermediate tsv files for easy loading  ##
-
-RNAseqFile=${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0/${TUMOR}.rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.data.txt
-
-samplesFile=${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0/samples.tsv
-
-Entrez_samplesFile=${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0/Entrez_samples.tsv
-
-Entrez_geneList=${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0/Entrez_geneList.tsv
-
-RNAexpr=${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0/RNAexpression.tsv
-
-
-# output must be one line per sample for 'input' operator to work, thus OFS='\n'
-cat ${RNAseqFile} |head -1|awk -F'\t' -v OFS='\n' '{ for (i=2; i<=NF;i++)  print $i}' > ${samplesFile} 
-
-cat ${RNAseqFile}|awk 'NR>2'|awk -F'|' '{ for (i=2; i<=NF; i++) print $i}' > ${Entrez_samplesFile}
-
-cat ${Entrez_samplesFile} |awk  '{for (i=2; i<NF; i++) printf $i "\t"; print $NF}' > ${RNAexpr} 
-
-cat ${Entrez_samplesFile} |awk -F'\t' -v OFS='\n' '{print $1}' > ${Entrez_geneList}
-
-##   echo "pulled out samples..."
-##   select yn in "yes" "no"; do
-##       case $yn in
-##           yes) break;;
-##           no ) exit 1 ;;
-##       esac
-##   done
-
+ cat ${Entrez_samplesFile} |awk  '{for (i=2; i<NF; i++) printf $i "\t"; print $NF}' > ${RNAexpr} 
+ 
+ cat ${Entrez_samplesFile} |awk -F'\t' -v OFS='\n' '{print $1}' > ${Entrez_geneList}
 
 
 ## update patient array ##
@@ -212,9 +192,6 @@ store(
 
 ##  update gene list ##
 iquery -anq "
-store(build(<subVal:uint64>[i=0:0,1,0],0),zeros)"
-
-iquery -anq "
 insert(
   redimension(
     apply(
@@ -233,7 +210,7 @@ insert(
                       redimension(
                         substitute(
                           TCGA_${DATE}_GENE_STD,
-                          zeros,
+                          build(<subVal:uint64>[i=0:0,1,0],0),
                           entrez_geneID
                           ),
                         <entrez_geneID:uint64>[gene_id=0:*,1000000,0]
@@ -271,51 +248,16 @@ TCGA_${DATE}_GENE_STD)"
 
 
 
-
-
-
-
-####  for file in `ls ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0 | grep -i ${TUMOR}`; do
-####      column_type=`cat ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0/$file | awk -F'\t' '{print NF}' |sort|uniq|wc|awk '{print $1}'`
-####      if [ ${column_type} != 1 ]; then
-####          echo "column disagree! "
-####          exit 1
-####      fi
-####  done
-####
-####
-#### ## echo "RNAseqv2 files column matches..."
-#### ## select yn in "yes" "no"; do
-#### ##     case $yn in
-#### ##         yes) break;;
-#### ##         no ) exit 1 ;;
-#### ##     esac
-#### ## done
- 
-
       for file in `ls ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0 | grep -i ${TUMOR}`; do
           column_no=`cat ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0/$file | awk -F'\t' '{print NF}' |head -n 1|awk '{print $1}'`
      
           echo "column_no is ${column_no} ..."
-          ##select yn in "yes" "no"; do
-          ##    case $yn in
-          ##        yes) break;;
-          ##        no ) exit 1 ;;
-          ##    esac
-          ##done
-    
+   
       done
     
     
-    
-####    FILE=${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.${DATE_SHORT}00.0.0/${TUMOR}.rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.data.txt
-####     
-  
-  
-  
+ 
 iquery -anq "remove(TCGA_RNAseq_LOAD_BUF)"    > /dev/null 2>&1
-  
-  
   
 iquery -anq "create temp array TCGA_RNAseq_LOAD_BUF
 <expression:string null>
@@ -337,21 +279,7 @@ store(
 )" 
    
 
-
-
-##  echo "loading temp array completed..."
-##  echo " continue to manipulate the LOAD_BUF..."
-##     select yn in "yes" "no"; do
-##        case $yn in
-##            yes) break;;
-##            no ) exit 1 ;;
-##        esac
-##    done
-
-
- 
 ## loading RNAseq data in one step; for two steps, see what follows ##
-
 iquery -anq "
 insert(
   redimension(
@@ -409,7 +337,7 @@ insert(
                 ) as VW,
               substitute(
                 project(TCGA_${DATE}_GENE_STD,entrez_geneID),
-                zeros,
+                build(<subVal:uint64>[i=0:0,1,0],0),
                 entrez_geneID
                 ),
               VW.entrez_geneID,
@@ -443,105 +371,5 @@ insert(
   )"
 
 
-##iquery -anq "remove(temp2)"
-##iquery -anq "
-##  store(
-##    redimension(
-##      apply(
-##          TCGA_RNAseq_LOAD_BUF,
-##          gene_id,
-##          1000*chunk_number + line_number
-##        ),
-##      <expression:string null>
-##      [col_number=0:*,1000000,0,
-##       gene_id=0:*,1000,0]
-##      ),
-##    temp2
-##    )" 
-  
-##  iquery -anq "
-##  insert(
-##    redimension(
-##      cast(
-##        substitute(
-##          project(
-##            index_lookup(
-##              index_lookup(
-##                apply(
-##                  index_lookup(
-##                    apply(
-##                      cross_join(
-##                        cross_join(
-##                          between(
-##                            temp2, 0, null, $((column_no-1)), null
-##                            ) as G,
-##                          input(
-##                            <sample_name:string null>
-##                            [sample_id=0:*, 1000000,0],
-##                            '${samplesFile}',
-##                            0,
-##                            'tsv'
-##                            ),
-##                          G.col_number,
-##                          sample_id
-##                          ) as U,
-##                        input(
-##                         <entrezID:string null>
-##                         [gene_id=0:*, 1000,0],
-##                         '${Entrez_geneList}',
-##                         0,
-##                         'tsv'
-##                         ) as N,
-##                        U.gene_id,
-##                        N.gene_id
-##                        ),
-##                      ttn, '${TUMOR}',
-##                      RNA_expressionLevel, dcast(expression, double(null))
-##                      ) as V,
-##                    TCGA_${DATE}_TUMOR_TYPE_STD,
-##                    V.ttn,
-##                    tumor_type_id) as W,
-##                  entrez_geneID,
-##                  dcast(W.entrezID, uint64(null))
-##                  ) as VW,
-##                substitute(
-##                  project(TCGA_${DATE}_GENE_STD,entrez_geneID),
-##                  zeros,
-##                  entrez_geneID
-##                  ),
-##                VW.entrez_geneID,
-##                en_geneID
-##                ) as H,
-##              redimension(
-##                TCGA_${DATE}_SAMPLE_STD,
-##                <sample_name:string>[sample_id=0:*,1000000,0]
-##                ),
-##              H.sample_name,
-##              sample_id
-##              ),
-##            tumor_type_id,
-##            en_geneID,
-##            sample_id,
-##            RNA_expressionLevel
-##            ),
-##          build(<subVal:int64>[i=0:0,1,0], 0),
-##          tumor_type_id, en_geneID, sample_id
-##          ),
-##        <tumor_type_id: int64,
-##         gene_id: int64,
-##         sample_id: int64,
-##         RNA_expressionLevel:double null>
-##        [i=0:*,1000,0,
-##         j=0:*,1000,0]
-##        ),
-##      TCGA_${DATE}_RNAseqV2_STD
-##      ),
-##    TCGA_${DATE}_RNAseqV2_STD
-##    )"
-
-  
-
 iquery -anq "remove(TCGA_RNAseq_LOAD_BUF)"    > /dev/null 2>&1
-
-rm ${samplesFile}
-rm ${entrez_geneFile}
+rm -rf  ${path_downloaded}
