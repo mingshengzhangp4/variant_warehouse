@@ -1,5 +1,14 @@
 #!/bin/bash
 
+if [ $# -ne 1 ]; then
+    echo "need one argument: geneFile, such as: "
+    echo "/home/scidb/variant_warehouse/load_gene_37/newGene.tsv"
+    exit 1
+fi
+
+geneFile=$1
+#geneFile=/home/scidb/variant_warehouse/load_gene_37/newGene.tsv
+
 DATE="2015_06_01"
 MYDIR=`pwd`
 
@@ -73,6 +82,5 @@ iquery -anq "load(TCGA_${DATE}_SAMPLE_TYPE_STD, '$MYDIR/sample_type.tsv', 0, 'ts
 iquery -anq "load(TCGA_${DATE}_TUMOR_TYPE_STD, '$MYDIR/tumor_type.tsv', 0, 'tsv')"
 
 # load gene list 
-bash load_gene.sh ${DATE} /home/scidb/mzhang/paradigm4_lab/variant_warehouse/load_gene_37/newGene.tsv
-
+bash load_gene.sh ${DATE} ${geneFile}
 
