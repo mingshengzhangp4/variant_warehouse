@@ -26,7 +26,9 @@ A2M	2	9220304	9268558	-	FWP007, S863-7, CPAMD5	A2MD|CPAMD5|FWP007|S863-7	MIM:103
 
 ** scidb gene array schema **
 
-TCGA_2015_06_01_GENE_STD<gene_symbol:string NULL, entrez_geneID:uint64 NULL,start_:string NULL,end_:string NULL,strand_:string NULL,hgnc_synonym:string NULL,synonym:string NULL,dbXrefs:string NULL,cyto_band:string NULL,full_name:string NULL,type_of_gene:string NULL,chrom:string NULL,other_locations:string NULL> [gene_id=0:*,1000000,0]'
+TCGA_2015_06_01_GENE_STD
+<gene_symbol:string NULL, entrez_geneID:uint64 NULL,start_:string NULL,end_:string NULL,strand_:string NULL,hgnc_synonym:string NULL,synonym:string NULL,dbXrefs:string NULL,cyto_band:string NULL,full_name:string NULL,type_of_gene:string NULL,chrom:string NULL,other_locations:string NULL>
+ [gene_id=0:*,1000000,0]'
 
 ** scripts for creating the array **
 
@@ -140,6 +142,69 @@ TCGA_${DATE}_CLINICAL_STD
 
 
 https://github.com/Paradigm4/variant_warehouse/load_tcga/tcga_dev/load_clinical_ming.sh
+
+include-
+update/insert: TCGA_{DATE}_PATIENT_STD (an intermediate patient list file created for this)
+
+********************************************************************
+********************************************************************
+
+MUTATION array
+
+*********************************************************************
+*********************************************************************
+
+** data URL **
+
+http://gdac.broadinstitute.org/runs/stddata__${DATE}/data/${TUMOR}/${DATE_SHORT}/gdac.broadinstitute.org_${TUMOR}.Mutation_Packager_Calls.Level_3.${DATE_SHORT}00.0.0.tar.gz
+
+
+** file structure in tar.gz **
+MANIFEST.txt          BRCA.merged_only_biospecimen_clin_format.txt
+BRCA.clin.merged.txt  BRCA.merged_only_clinical_clin_format.txt
+
+
+** Content **
+
+--all three files (BRCA.*.txt) merged--
+  * BRCA.merged_only_biospecimen_clin_format.txt
+    2190 rows, 1087 columns
+  * BRCA.merged_only_clinical_clin_format.txt
+    1496 rows, 1087 columns
+  * BRCA.clin.merged.txt
+    2190+1496 rows, 1087 columns
+
+   note: 1087 columns = 1086 patient-columns + 1 clinical_type-column(column 0) 
+
+--layout--
+V1                           V2.x            V3.x            V4.x         ... V1085.x V1086.x
+admin.batch_number           379.20.0        379.20.0        379.20.0     ...
+    ..........
+patient.bcr_patient_barcode  tcga-3c-aaau    tcga-3c-aali    tcga-3c-aalj ... 
+    ..........
+
+** scidb array schema **
+
+ TCGA_${DATE}_MUTATION_STD
+ <GRCh_release:string null,
+  mutation_genomic_chr:string null,
+  mutation_genomic_start:int64 null,
+  mutation_genomic_end:int64 null,
+  mutation_type: string null,
+  variant_type: string null,  
+  reference_allele:string null,
+  tumor_allele:string null,
+  c_pos_change:string null,
+  p_pos_change:string null>
+ [tumor_type_id=0:*,1,0,
+  gene_id=0:*,1000000,0,
+  sample_id=0:*,1000,0,
+  mutation_id=0:*,100000,0]"
+
+** loading scripts **
+
+
+https://github.com/Paradigm4/variant_warehouse/load_tcga/tcga_dev/load_mutation_ming.sh
 
 include-
 update/insert: TCGA_{DATE}_PATIENT_STD (an intermediate patient list file created for this)

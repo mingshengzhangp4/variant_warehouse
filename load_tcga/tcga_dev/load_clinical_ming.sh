@@ -113,55 +113,37 @@ store(
  TCGA_CLIN_KEYS
 )"
 
-##  iquery -anq "
-##  insert(
-##   redimension(
-##    index_lookup(
-##     apply(
-##      cross_join(
-##       unpack(
-##        filter(
-##         index_lookup(
-##          input(<patient_name:string>[z=0:*,1000000,0], '$MYDIR/patients.tsv', 0, 'tsv') as A,
-##          redimension(TCGA_${DATE}_PATIENT_STD, <patient_name:string> [patient_id=0:*,1000000,0]) as B,
-##          A.patient_name, 
-##          pid
-##         ),
-##         pid is null
-##        ),
-##        patient_no
-##       ),
-##       aggregate( apply(TCGA_${DATE}_PATIENT_STD, pid, patient_id), max(pid) as mpid)
-##      ),
-##      ttn, '${TUMOR}',
-##      patient_id, iif(mpid is null, patient_no, mpid+1+patient_no)
-##     ),
-##     TCGA_${DATE}_TUMOR_TYPE_STD,
-##     ttn,
-##     tumor_type_id
-##    ),
-##    TCGA_${DATE}_PATIENT_STD 
-##   ),
-##   TCGA_${DATE}_PATIENT_STD
-##  )"
-
-
-echo "Done. Continue?"
-select yn in "yes" "no"; do
-    case $yn in
-        yes) break;;
-        no ) exit 1;;
-    esac
-done
-
-echo "Insert clinical data?"
-select yn in "yes" "no"; do
-    case $yn in
-        yes) break;;
-        no ) exit 1;;
-    esac
-done
-
+iquery -anq "
+insert(
+ redimension(
+  index_lookup(
+   apply(
+    cross_join(
+     unpack(
+      filter(
+       index_lookup(
+        input(<patient_name:string>[z=0:*,1000000,0], '$MYDIR/patients.tsv', 0, 'tsv') as A,
+        redimension(TCGA_${DATE}_PATIENT_STD, <patient_name:string> [patient_id=0:*,1000000,0]) as B,
+        A.patient_name, 
+        pid
+       ),
+       pid is null
+      ),
+      patient_no
+     ),
+     aggregate( apply(TCGA_${DATE}_PATIENT_STD, pid, patient_id), max(pid) as mpid)
+    ),
+    ttn, '${TUMOR}',
+    patient_id, iif(mpid is null, patient_no, mpid+1+patient_no)
+   ),
+   TCGA_${DATE}_TUMOR_TYPE_STD,
+   ttn,
+   tumor_type_id
+  ),
+  TCGA_${DATE}_PATIENT_STD 
+ ),
+ TCGA_${DATE}_PATIENT_STD
+)"
 
 
 iquery -anq "
@@ -215,16 +197,9 @@ insert(
 )"
 
 
-echo "Done. Continue?"
-select yn in "yes" "no"; do
-    case $yn in
-        yes) break;;
-        no ) exit 1;;
-    esac
-done
-
-
 iquery -aq "remove(TCGA_CLIN_KEYS)"
 iquery -aq "remove(TCGA_CLIN_LOAD_BUF)"
 rm $MYDIR/patients.tsv
 rm $CLIN_FILE
+rm -rf ${path_downloaded}
+
