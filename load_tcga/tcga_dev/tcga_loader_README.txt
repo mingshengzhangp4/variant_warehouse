@@ -116,6 +116,8 @@ BRCA.clin.merged.txt  BRCA.merged_only_clinical_clin_format.txt
   * BRCA.clin.merged.txt
     2190+1496 rows, 1087 columns
 
+   note: 1087 columns = 1086 patient-columns + 1 clinical_type-column(column 0) 
+
 --layout--
 V1                           V2.x            V3.x            V4.x         ... V1085.x V1086.x
 admin.batch_number           379.20.0        379.20.0        379.20.0     ...
@@ -123,16 +125,22 @@ admin.batch_number           379.20.0        379.20.0        379.20.0     ...
 patient.bcr_patient_barcode  tcga-3c-aaau    tcga-3c-aali    tcga-3c-aalj ... 
     ..........
 
+** scidb array schema **
 
+TCGA_${DATE}_CLINICAL_STD 
+<key:string,value:string null> 
+[tumor_type_id=0:*,1,0,
+ clinical_line_nbr=0:*,1000,0,
+ patient_id=0:*,1000,0]
+
+  note: clinical_line_nbr == row # <-> key == column 0
+        so a TCGA_CLIN_KEY array is created to map key <-> clinical_line_nbr
 
 ** loading scripts **
 
 
-https://github.com/Paradigm4/variant_warehouse/load_tcga/tcga_dev/load_clinical.sh
+https://github.com/Paradigm4/variant_warehouse/load_tcga/tcga_dev/load_clinical_ming.sh
 
 include-
-update/insert: TCGA_{DATE}_PATIENT_STD
-update/insert: TCGA_{DATE}_SAMPLE_STD
-update/insert: TCGA_{GATE}_GENE_STD
-
+update/insert: TCGA_{DATE}_PATIENT_STD (an intermediate patient list file created for this)
 

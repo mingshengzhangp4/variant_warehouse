@@ -5,12 +5,9 @@ if [ $# -ne 2 ]; then
  exit 1
 fi
 
-DATE=$1
-TUMOR=$2
+DATE=$1  #DATE="2015_06_01"
 
-#DATE="2015_06_01"
-#TUMOR="BRCA"
-
+TUMOR=$2  #TUMOR="BRCA"
 
 DATE_SHORT=`echo $DATE | sed -s "s/_//g"`
 echo $DATE_SHORT
@@ -25,20 +22,16 @@ mkdir -p ${path_downloaded}
 #Sadface.
 #So our approach is to cat all the files into one, load that, then pick values on all non-NA keys.
 
- wget -nv -P ${path_downloaded} http://gdac.broadinstitute.org/runs/stddata__${DATE}/data/${TUMOR}/${DATE_SHORT}/gdac.broadinstitute.org_${TUMOR}.Merge_Clinical.Level_1.${DATE_SHORT}00.0.0.tar.gz
+{ wget -nv -P ${path_downloaded} http://gdac.broadinstitute.org/runs/stddata__${DATE}/data/${TUMOR}/${DATE_SHORT}/gdac.broadinstitute.org_${TUMOR}.Merge_Clinical.Level_1.${DATE_SHORT}00.0.0.tar.gz
+}||{
+echo "The requested file does not exist: "
+echo "http://gdac.broadinstitute.org/runs/stddata__${DATE}/data/${TUMOR}/${DATE_SHORT}/gdac.broadinstitute.org_${TUMOR}.Merge_Clinical.Level_1.${DATE_SHORT}00.0.0.tar.gz"
+echo "exiting..."
+exit 1
+}
 
 
  tar -zxvf ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_Clinical.Level_1.${DATE_SHORT}00.0.0.tar.gz --directory ${path_downloaded}
-
-
-echo "unzipped tar.gz. Continue?"
-select yn in "yes" "no"; do
-    case $yn in
-        yes) break;;
-        no ) exit 1;;
-    esac
-done
-
 
 MYDIR=${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_Clinical.Level_1.${DATE_SHORT}00.0.0
 
@@ -46,185 +39,79 @@ MYDIR=${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_Clinical.Level_1
 rm -f $MYDIR/*auxiliary*
 
 CLIN_FILE=$MYDIR/clinical.txt
-# cat $MYDIR/${TUMOR}.*txt | tail -n +2  > $CLIN_FILE
-
-
-echo "merged 3 files. Continue?"
-select yn in "yes" "no"; do
-    case $yn in
-        yes) break;;
-        no ) exit 1;;
-    esac
-done
+cat $MYDIR/${TUMOR}.*txt | tail -n +2  > $CLIN_FILE
 
 
 CLIN_NUM_COLUMNS=`cat $CLIN_FILE | awk  -F '\t' '{print NF}' | head -n 1`
 
 
-echo $CLIN_NUM_COLUMNS
-echo "found column number. Continue?"
-select yn in "yes" "no"; do
-    case $yn in
-        yes) break;;
-        no ) exit 1;;
-    esac
-done
+ iquery -anq "remove(TCGA_CLIN_LOAD_BUF)"    > /dev/null 2>&1
+ iquery -anq "create temp array TCGA_CLIN_LOAD_BUF
+ <field:string null>
+ [source_instance_id = 0:*,1,0,
+  chunk_number       = 0:*,1,0,
+  line_number        = 0:*,1000,0,
+  column_number      = 0:$CLIN_NUM_COLUMNS, $((CLIN_NUM_COLUMNS+1)), 0]"
 
+  iquery -anq "
+  store(
+   parse(
+    split('$CLIN_FILE', 'header=0', 'lines_per_chunk=1000'),
+    'chunk_size=1000', 'split_on_dimension=1', 'num_attributes=$CLIN_NUM_COLUMNS'
+   ),
+   TCGA_CLIN_LOAD_BUF
+  )" 
 
+MISMATCH_COUNT=`iquery -ocsv -aq "
+op_count(
+ filter(
+  aggregate(
+   cross_join(
+    TCGA_CLIN_LOAD_BUF as A, 
+    redimension(
+     filter(
+      between(TCGA_CLIN_LOAD_BUF, null, null, null, 0, null, null, null, 0), 
+      field='patient.bcr_patient_barcode'
+     ), 
+     <field:string null> [chunk_number=0:*,1,0, line_number=0:*,1000,0]
+    ) as B, 
+    A.chunk_number, B.chunk_number, A.line_number, B.line_number
+   ), 
+   min(A.field) as a, 
+   max(A.field) as b, 
+   column_number
+  ), 
+  a<>b
+ )
+)" | tail -n 1`
 
-
-
-#   iquery -anq "remove(TCGA_CLIN_LOAD_BUF)"    > /dev/null 2>&1
-#   iquery -anq "create temp array TCGA_CLIN_LOAD_BUF
-#   <field:string null>
-#   [source_instance_id = 0:*,1,0,
-#    chunk_number       = 0:*,1,0,
-#    line_number        = 0:*,1000,0,
-#    column_number      = 0:$CLIN_NUM_COLUMNS, $((CLIN_NUM_COLUMNS+1)), 0]"
-#  
-#  
-#  echo "set up template array TCGA_CLIN_LOAD_BUF. Continue?"
-#  select yn in "yes" "no"; do
-#      case $yn in
-#          yes) break;;
-#          no ) exit 1;;
-#      esac
-#  done
-#  
-#  
-#    iquery -anq "
-#    store(
-#     parse(
-#      split('$CLIN_FILE', 'header=0', 'lines_per_chunk=1000'),
-#      'chunk_size=1000', 'split_on_dimension=1', 'num_attributes=$CLIN_NUM_COLUMNS'
-#     ),
-#     TCGA_CLIN_LOAD_BUF
-#    )" 
-#  
-
-echo "populated array TCGA_CLIN_LOAD_BUF. Continue?"
-select yn in "yes" "no"; do
-    case $yn in
-        yes) break;;
-        no ) exit 1;;
-    esac
-done
-
-
-##  MISMATCH_COUNT=`iquery -ocsv -aq "
-##  op_count(
-##   filter(
-##    aggregate(
-##     cross_join(
-##      TCGA_CLIN_LOAD_BUF as A, 
-##      redimension(
-##       filter(
-##        between(TCGA_CLIN_LOAD_BUF, null, null, null, 0, null, null, null, 0), 
-##        field='patient.bcr_patient_barcode'
-##       ), 
-##       <field:string null> [chunk_number=0:*,1,0, line_number=0:*,1000,0]
-##      ) as B, 
-##      A.chunk_number, B.chunk_number, A.line_number, B.line_number
-##     ), 
-##     min(A.field) as a, 
-##     max(A.field) as b, 
-##     column_number
-##    ), 
-##    a<>b
-##   )
-##  )" | tail -n 1`
-##  
-##  if [ $MISMATCH_COUNT -ne 0 ]; then
-##   echo "File column mismatch. Sorry brah!"
-##   exit 1
-##  fi
-
-
-echo "checked if file column mismatch. Continue?"
-select yn in "yes" "no"; do
-    case $yn in
-        yes) break;;
-        no ) exit 1;;
-    esac
-done
-
+if [ $MISMATCH_COUNT -ne 0 ]; then
+ echo "File column mismatch. Sorry brah!"
+ exit 1
+fi
 
   PATIENTS_LOCATION=`iquery -ocsv -aq "project(unpack(filter(between(TCGA_CLIN_LOAD_BUF, null, null, null, 0, null, null, null, 0), field='patient.bcr_patient_barcode'), z), chunk_number, line_number)" | tail -n 1`
    
   
-  echo "patients_location:"
-  echo ${PATIENTS_LOCATION}
-  echo "got PATIENTS_LOCATION. Continue?"
-  select yn in "yes" "no"; do
-      case $yn in
-          yes) break;;
-          no ) exit 1;;
-      esac
-  done
-  
-##  echo "Generate patients_list?"
-##  select yn in "yes" "no"; do
-##      case $yn in
-##          yes) break;;
-##          no ) exit 1;;
-##      esac
-##  done
-##  
-##  
-##  iquery -otsv -aq "between(TCGA_CLIN_LOAD_BUF, 0, $PATIENTS_LOCATION, 1, 0, $PATIENTS_LOCATION, $CLIN_NUM_COLUMNS-1)" | tail -n +2 | sed -e 's/\(.*\)/\U\1/' > $MYDIR/patients.tsv
-##  
-##  echo "Done. Continue?"
-##  select yn in "yes" "no"; do
-##      case $yn in
-##          yes) break;;
-##          no ) exit 1;;
-##      esac
-##  done
-##  
-
-echo "Generate clinical keys?"
-select yn in "yes" "no"; do
-    case $yn in
-        yes) break;;
-        no ) exit 1;;
-    esac
-done
+iquery -otsv -aq "between(TCGA_CLIN_LOAD_BUF, 0, $PATIENTS_LOCATION, 1, 0, $PATIENTS_LOCATION, $CLIN_NUM_COLUMNS-1)" | tail -n +2 | sed -e 's/\(.*\)/\U\1/' > $MYDIR/patients.tsv
 
 
-##  iquery -naq "remove(TCGA_CLIN_KEYS)" > /dev/null 2>&1
-##  iquery -naq "
-##  store(
-##   cast(
-##    uniq(
-##     sort(
-##      project(
-##       between(TCGA_CLIN_LOAD_BUF, null, null, null, 0, null, null, null, 0), 
-##       field
-##      )
-##     )
-##    ),
-##    <key:string> [clinical_line_nbr=0:*,1000000,0]
-##   ), 
-##   TCGA_CLIN_KEYS
-##  )"
-##  
-  echo "Done. Continue?"
-  select yn in "yes" "no"; do
-      case $yn in
-          yes) break;;
-          no ) exit 1;;
-      esac
-  done
-  
-
-echo "Insert new patients?"
-select yn in "yes" "no"; do
-    case $yn in
-        yes) break;;
-        no ) exit 1;;
-    esac
-done
-
+iquery -naq "remove(TCGA_CLIN_KEYS)" > /dev/null 2>&1
+iquery -naq "
+store(
+ cast(
+  uniq(
+   sort(
+    project(
+     between(TCGA_CLIN_LOAD_BUF, null, null, null, 0, null, null, null, 0), 
+     field
+    )
+   )
+  ),
+  <key:string> [clinical_line_nbr=0:*,1000000,0]
+ ), 
+ TCGA_CLIN_KEYS
+)"
 
 ##  iquery -anq "
 ##  insert(
