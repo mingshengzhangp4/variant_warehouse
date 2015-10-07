@@ -88,4 +88,51 @@ update/insert: TCGA_{DATE}_PATIENT_STD
 update/insert: TCGA_{DATE}_SAMPLE_STD
 update/insert: TCGA_{GATE}_GENE_STD
 
+********************************************************************
+********************************************************************
+
+CLIN array
+
+*********************************************************************
+*********************************************************************
+
+** data URL **
+
+http://gdac.broadinstitute.org/runs/stddata__${DATE}/data/${TUMOR}/${DATE_SHORT}/gdac.broadinstitute.org_${TUMOR}.Merge_Clinical.Level_1.${DATE_SHORT}00.0.0.tar.gz
+
+
+** file structure in tar.gz **
+MANIFEST.txt          BRCA.merged_only_biospecimen_clin_format.txt
+BRCA.clin.merged.txt  BRCA.merged_only_clinical_clin_format.txt
+
+
+** Content **
+
+--all three files (BRCA.*.txt) merged--
+  * BRCA.merged_only_biospecimen_clin_format.txt
+    2190 rows, 1087 columns
+  * BRCA.merged_only_clinical_clin_format.txt
+    1496 rows, 1087 columns
+  * BRCA.clin.merged.txt
+    2190+1496 rows, 1087 columns
+
+--layout--
+V1                           V2.x            V3.x            V4.x         ... V1085.x V1086.x
+admin.batch_number           379.20.0        379.20.0        379.20.0     ...
+    ..........
+patient.bcr_patient_barcode  tcga-3c-aaau    tcga-3c-aali    tcga-3c-aalj ... 
+    ..........
+
+
+
+** loading scripts **
+
+
+https://github.com/Paradigm4/variant_warehouse/load_tcga/tcga_dev/load_clinical.sh
+
+include-
+update/insert: TCGA_{DATE}_PATIENT_STD
+update/insert: TCGA_{DATE}_SAMPLE_STD
+update/insert: TCGA_{GATE}_GENE_STD
+
 

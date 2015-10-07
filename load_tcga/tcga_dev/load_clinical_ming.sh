@@ -15,17 +15,20 @@ TUMOR=$2
 DATE_SHORT=`echo $DATE | sed -s "s/_//g"`
 echo $DATE_SHORT
 
-path_downloaded=/home/mzhang/Documents/tcga_download
+cwd=`pwd`
+path_downloaded=${cwd}/tcga_download
+mkdir -p ${path_downloaded}
+
 
 
 #We found sometimes the "merged" file has NA fields where one of the other files has the same fields populated for the same key!!!
 #Sadface.
 #So our approach is to cat all the files into one, load that, then pick values on all non-NA keys.
 
-# wget -P ${path_downloaded} http://gdac.broadinstitute.org/runs/stddata__${DATE}/data/${TUMOR}/${DATE_SHORT}/gdac.broadinstitute.org_${TUMOR}.Merge_Clinical.Level_1.${DATE_SHORT}00.0.0.tar.gz
+ wget -nv -P ${path_downloaded} http://gdac.broadinstitute.org/runs/stddata__${DATE}/data/${TUMOR}/${DATE_SHORT}/gdac.broadinstitute.org_${TUMOR}.Merge_Clinical.Level_1.${DATE_SHORT}00.0.0.tar.gz
 
 
-# tar -zxvf ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_Clinical.Level_1.${DATE_SHORT}00.0.0.tar.gz --directory ${path_downloaded}
+ tar -zxvf ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_Clinical.Level_1.${DATE_SHORT}00.0.0.tar.gz --directory ${path_downloaded}
 
 
 echo "unzipped tar.gz. Continue?"
