@@ -198,7 +198,7 @@ insert(
               filter(
                 index_lookup(
                   input(
-                    <entrez_geneID:uint64>[gene_id=0:*,1000000,0], 
+                    <entrez_geneID:int64>[gene_id=0:*,1000000,0], 
                     '${Entrez_geneList}',0,'tsv'
                     ) as A,
                   uniq(
@@ -206,10 +206,10 @@ insert(
                       redimension(
                         substitute(
                           TCGA_${DATE}_GENE_STD,
-                          build(<subVal:uint64>[i=0:0,1,0],0),
+                          build(<subVal:int64>[i=0:0,1,0],0),
                           entrez_geneID
                           ),
-                        <entrez_geneID:uint64>[gene_id=0:*,1000000,0]
+                        <entrez_geneID:int64>[gene_id=0:*,1000000,0]
                         )
                       )
                     ) as B,
@@ -329,11 +329,11 @@ insert(
                   V.ttn,
                   tumor_type_id) as W,
                 entrez_geneID,
-                dcast(W.entrezID, uint64(null))
+                dcast(W.entrezID, int64(null))
                 ) as VW,
               substitute(
                 project(TCGA_${DATE}_GENE_STD,entrez_geneID),
-                build(<subVal:uint64>[i=0:0,1,0],0),
+                build(<subVal:int64>[i=0:0,1,0],0),
                 entrez_geneID
                 ),
               VW.entrez_geneID,

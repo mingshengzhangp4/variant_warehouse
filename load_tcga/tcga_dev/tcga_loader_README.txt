@@ -27,7 +27,7 @@ A2M	2	9220304	9268558	-	FWP007, S863-7, CPAMD5	A2MD|CPAMD5|FWP007|S863-7	MIM:103
 ** scidb gene array schema **
 
 TCGA_2015_06_01_GENE_STD
-<gene_symbol:string NULL, entrez_geneID:uint64 NULL,start_:string NULL,end_:string NULL,strand_:string NULL,hgnc_synonym:string NULL,synonym:string NULL,dbXrefs:string NULL,cyto_band:string NULL,full_name:string NULL,type_of_gene:string NULL,chrom:string NULL,other_locations:string NULL>
+<gene_symbol:string NULL, entrez_geneID:int64 NULL,start_:string NULL,end_:string NULL,strand_:string NULL,hgnc_synonym:string NULL,synonym:string NULL,dbXrefs:string NULL,cyto_band:string NULL,full_name:string NULL,type_of_gene:string NULL,chrom:string NULL,other_locations:string NULL>
  [gene_id=0:*,1000000,0]'
 
 ** scripts for creating the array **
@@ -160,34 +160,20 @@ http://gdac.broadinstitute.org/runs/stddata__${DATE}/data/${TUMOR}/${DATE_SHORT}
 
 
 ** file structure in tar.gz **
-MANIFEST.txt          BRCA.merged_only_biospecimen_clin_format.txt
-BRCA.clin.merged.txt  BRCA.merged_only_clinical_clin_format.txt
+MANIFEST.txt             TCGA-OR-A5LH-01.maf.txt  TCGA-OR-A5L2-01.maf.txt ...(all samples)
 
 
-** Content **
+** Content of a maf file **
 
---all three files (BRCA.*.txt) merged--
-  * BRCA.merged_only_biospecimen_clin_format.txt
-    2190 rows, 1087 columns
-  * BRCA.merged_only_clinical_clin_format.txt
-    1496 rows, 1087 columns
-  * BRCA.clin.merged.txt
-    2190+1496 rows, 1087 columns
+Hugo_Symbol	Entrez_Gene_Id	Center	   NCBI_Build	Chromosome	Start_position ...(67 fields)
+AK2	        204	        bcgsc.ca	37	1	        334789831      ...
 
-   note: 1087 columns = 1086 patient-columns + 1 clinical_type-column(column 0) 
-
---layout--
-V1                           V2.x            V3.x            V4.x         ... V1085.x V1086.x
-admin.batch_number           379.20.0        379.20.0        379.20.0     ...
-    ..........
-patient.bcr_patient_barcode  tcga-3c-aaau    tcga-3c-aali    tcga-3c-aalj ... 
-    ..........
+note: for some files, Entrez_Gene_ID is empty (e.g. BRCA all set to 0)
 
 ** scidb array schema **
 
  TCGA_${DATE}_MUTATION_STD
  <GRCh_release:string null,
-  mutation_genomic_chr:string null,
   mutation_genomic_start:int64 null,
   mutation_genomic_end:int64 null,
   mutation_type: string null,
@@ -207,5 +193,8 @@ patient.bcr_patient_barcode  tcga-3c-aaau    tcga-3c-aali    tcga-3c-aalj ...
 https://github.com/Paradigm4/variant_warehouse/load_tcga/tcga_dev/load_mutation_ming.sh
 
 include-
-update/insert: TCGA_{DATE}_PATIENT_STD (an intermediate patient list file created for this)
+update/insert: TCGA_{DATE}_PATIENT_STD
+update/insert: TCGA_{DATE}_SAMPLE_STD
+update/insert: TCGA_{GATE}_GENE_STD
+
 

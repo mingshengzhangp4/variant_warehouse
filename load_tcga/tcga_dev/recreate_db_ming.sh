@@ -36,7 +36,7 @@ iquery -aq "create array TCGA_${DATE}_CLINICAL_STD <key:string,value:string null
 
 iquery -anq "create array TCGA_${DATE}_GENE_STD
 <gene_symbol: string null,
- entrez_geneID: uint64 null,
+ entrez_geneID: int64 null,
  start_: string null,
  end_: string null,
  strand_: string null,
@@ -54,7 +54,6 @@ iquery -anq "create array TCGA_${DATE}_GENE_STD
 
 iquery -aq "create array TCGA_${DATE}_MUTATION_STD
  <GRCh_release:string null,
-  mutation_genomic_chr:string null,
   mutation_genomic_start:int64 null,
   mutation_genomic_end:int64 null,
   mutation_type: string null,

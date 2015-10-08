@@ -32,36 +32,24 @@ exit 1
  tar -zxvf ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Mutation_Packager_Calls.Level_3.${DATE_SHORT}00.0.0.tar.gz --directory ${path_downloaded}/
 
 
+## field map-
+## $16: Tumor-Sample-Barcode  $1: Hugo-Symbol $4: NCBI_BUILD $6: Start_position $7: End_position
+## $9: variant-classification $10: variant-type $11: reference-allele $12: Tumor-seq-allele1
+## $13: Tumor-sequence-allele2
+ 
  AWK_STRING='{print $16 "\t" $1 "\t" $4 "\t" $6 "\t" $7 "\t" $9 "\t" $10 "\t" $11 "\t" $12 "\t" $13 "\t" $'$C_pos' "\t" $'$P_pos'}'
 
-## AWK_STRING='{print $16 "\t" $1 "\t" $4 "\t" $5 "\t" $6 "\t" $7 "\t" $9 "\t" $10 "\t" $11 "\t" $12 "\t" $13 "\t" $'$C_pos' "\t" $'$P_pos'}'
 
-
-## rm "${path_downloaded}/${TUMOR}_mutation.tsv"
+rm -f  "${path_downloaded}/${TUMOR}_mutation.tsv"
 
   for file in `ls ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Mutation_Packager_Calls.Level_3.${DATE_SHORT}00.0.0 | grep -i maf`; do
       cat ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Mutation_Packager_Calls.Level_3.${DATE_SHORT}00.0.0/$file | tail -n +2 | awk -F "\t" "${AWK_STRING}" >> "${path_downloaded}/${TUMOR}_mutation.tsv" 
   done
 
 
-  echo "generated tumor_mutation file..."
-  select yn in "yes" "no"; do
-      case $yn in
-          yes) break;;
-          no ) exit 1 ;;
-      esac
-  done
- 
-
-
-
-
-  MYDIR=`pwd`
-
 FILE="${path_downloaded}/${TUMOR}_mutation.tsv"
 
-
-  iquery -anq "remove(TCGA_MUTATION_LOAD_BUF)"    > /dev/null 2>&1
+iquery -anq "remove(TCGA_MUTATION_LOAD_BUF)"    > /dev/null 2>&1
   
   
   
@@ -69,7 +57,6 @@ FILE="${path_downloaded}/${TUMOR}_mutation.tsv"
   <sample_:string null,
    gene_:string null,
    release_:string null,
-   chrom_:string null,
    start_:string null,
    end_:string null,
    mtype_:string null,
@@ -91,7 +78,7 @@ FILE="${path_downloaded}/${TUMOR}_mutation.tsv"
   store(
    parse(
     split('$FILE', 'lines_per_chunk=1000'),
-    'chunk_size=1000', 'num_attributes=13'
+    'chunk_size=1000', 'num_attributes=12'
    ),
    TCGA_MUTATION_LOAD_BUF
   )" 
@@ -99,15 +86,6 @@ FILE="${path_downloaded}/${TUMOR}_mutation.tsv"
   
   
   #Insert new patients
-  
-  echo "so far so good. Insert new patients to TCGA_${DATE}_PATIENT_STD ?"
-  select yn in "yes" "no"; do
-      case $yn in
-          yes) break;;
-          no ) exit 1 ;;
-      esac
-  done
-  
   
   iquery -anq "
   insert(
@@ -149,68 +127,68 @@ FILE="${path_downloaded}/${TUMOR}_mutation.tsv"
    TCGA_${DATE}_PATIENT_STD
   )"
   
- 
-
-echo "sfsg. insert new genes in TCGA_${DATE}_GENE_STD ?"
-select yn in "yes" "no"; do
-    case $yn in
-        yes) break;;
-        no ) exit 1 ;;
-    esac
-done
-
 
 #Insert new gene entries we havent seen before
 #Me thinks we need a new gene list
 #Lord this is messy
-##  iquery -anq "
-##  insert(
-##   redimension(
-##     apply(
-##      cross_join(
-##       uniq(
-##        sort(
-##         project(
-##          filter(
-##           index_lookup(
-##             TCGA_MUTATION_LOAD_BUF,
-##             redimension(TCGA_${DATE}_GENE_STD, <gene_symbol:string> [gene_id=0:*,1000000,0]) as B,
-##             gene_, 
-##             gid
-##           ),
-##           gid is null
-##          ),
-##          gene_
-##         )
-##        )
-##       ) as new_genes,
-##       aggregate( apply(TCGA_${DATE}_GENE_STD, gid, gene_id), max(gid) as mgid)
-##      ),
-##      gene_symbol, gene_,
-##      gene_id, iif(mgid is null, new_genes.i, mgid+1+new_genes.i),
-##      genomic_start, uint64( 0),
-##      genomic_end,   uint64( 0),
-##      strand,        char('0'),
-##      locus_tag,     '-',
-##      synonyms,      '-',
-##      dbXrefs,       '-',
-##      map_location,  '-',
-##      description,   '-',
-##      type_of_gene,  'unknown',
-##      chromosome_nbr, uint64(0)
-##     ),
-##    TCGA_${DATE}_GENE_STD
-##   ),
-##   TCGA_${DATE}_GENE_STD
-##  )"
-##  
-##  echo "sfsg. insert new samples in TCGA_${DATE}_SAMPLE_STD ?"
-##  select yn in "yes" "no"; do
-##      case $yn in
-##          yes) break;;
-##          no ) exit 1 ;;
-##      esac
-## done
+
+
+iquery -anq "
+insert(
+  redimension(
+    apply(
+      cross_join(
+        substitute(
+          uniq(
+            sort(
+              project(
+                filter(
+                  index_lookup(
+                    TCGA_MUTATION_LOAD_BUF,
+                    uniq(sort(
+                      redimension(
+                        substitute(
+                          TCGA_${DATE}_GENE_STD,
+                          build(<subval:string>[i=0:0,1,0],'_'),
+                          gene_symbol
+                          ),
+                        <gene_symbol:string> [gene_id=0:*,1000000,0]
+                        )
+                     )) as B,
+                    gene_, 
+                    gid
+                    ),
+                  gid is null
+                  ),
+                gene_
+                )
+              )
+            ),
+          build(<subval:string>[i=0:0,1,0], '_'),
+          gene_ 
+          ) as new_genes,
+
+        aggregate( apply(TCGA_${DATE}_GENE_STD, gid, gene_id), max(gid) as mgid)
+      ),
+      gene_symbol, gene_,
+      gene_id, iif(mgid is null, new_genes.i, mgid+1+new_genes.i),
+      entrez_geneID, int64(0),
+      start_, '_',
+      end_, '_',
+      strand_, '_',
+      hgnc_synonym, '_',
+      synonym, '_',
+      dbXrefs, '_',
+      cyto_band, '_',
+      full_name, '_',
+      type_of_gene, '_',
+      chrom, '_',
+      other_locations, '_'
+      ),
+    TCGA_${DATE}_GENE_STD
+    ),
+  TCGA_${DATE}_GENE_STD
+  )"
 
 
 #Insert new samples
@@ -267,15 +245,6 @@ insert(
 )"
 
 
-echo "sfsg. insert new mutations in TCGA_${DATE}_MUTATION_STD ?"
-select yn in "yes" "no"; do
-    case $yn in
-        yes) break;;
-        no ) exit 1 ;;
-    esac
-done
-
-
 iquery -anq "
 insert(
  redimension(
@@ -287,7 +256,6 @@ insert(
        TCGA_MUTATION_LOAD_BUF,
        sample_name, substr(sample_, 0, 15),
        GRCh_release, release_,
-       mutation_genomic_chr, chrom_,
        mutation_genomic_start, dcast(start_, int64(null)),
        mutation_genomic_end,   dcast(end_, int64(null)),
        mutation_type, mtype_,
@@ -306,12 +274,11 @@ insert(
      A.ttn,
      tumor_type_id
     ),
-
     substitute(
         redimension(TCGA_${DATE}_GENE_STD, <gene_symbol:string null>[gene_id=0:*,10000,0]),
-        zeros,gene_symbol
+        build(<subval:string>[i=0:0,1,0],'_'),
+        gene_symbol
     ),
-
     A.gene_,
     gene_id_
    ),
@@ -322,14 +289,8 @@ insert(
  TCGA_${DATE}_MUTATION_STD
 )"
 
-##echo "all done? clear the loading buffer?"
-##select yn in "yes" "no"; do
-##    case $yn in
-##        yes) break;;
-##        no ) exit 1 ;;
-##    esac
-##done
-
-
  
 iquery -anq "remove(TCGA_MUTATION_LOAD_BUF)"    > /dev/null 2>&1
+rm -f  "${path_downloaded}/${TUMOR}_mutation.tsv"
+rm -rf ${path_downloaded}
+

@@ -7,13 +7,13 @@ exec > >(tee ${logfile})
 exec 2>&1
 
 
-bash  ./recreate_db_ming.sh /home/mzhang/Paradigm4_labs/variant_warehouse/load_gene_37/newGene.tsv
+bash  ./recreate_db_ming.sh /home/scidb/variant_warehouse/load_gene_37/newGene.tsv
 
-echo "start clinical data loading @ `date`"
-for tumor_type in `cat tumor_type.tsv`; do
-  ./load_clinical_ming.sh 2015_06_01 $tumor_type
-done
-echo "finished loading clinical data @ `date`"
+## echo "start clinical data loading @ `date`"
+## for tumor_type in `cat tumor_type.tsv`; do
+##   ./load_clinical_ming.sh 2015_06_01 $tumor_type
+## done
+## echo "finished loading clinical data @ `date`"
 
 
 ##  echo "start RNA seq loading @:"
@@ -27,7 +27,7 @@ echo "finished loading clinical data @ `date`"
 
 
 
-##  bash ./load_mutation_ming.sh 2015_06_01 ACC 39 40
+ bash ./load_mutation_ming.sh 2015_06_01 ACC 39 40
 ##  
 ##    echo "completed one tumor type..."
 ##    select yn in "yes" "no"; do

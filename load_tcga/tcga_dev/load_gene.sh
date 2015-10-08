@@ -55,11 +55,11 @@ store(
                 gene_no,
                 z 
                 ),
-            <source_instance_id: uint64,
-             chunk_number: uint64,
-             line_number: uint64,
+            <source_instance_id: int64,
+             chunk_number: int64,
+             line_number: int64,
              gene_symbol: string null,
-             entrez_geneID: uint64 null,
+             entrez_geneID: int64 null,
              start_: string null,
              end_: string null,
              strand_: string null,
@@ -72,7 +72,7 @@ store(
              chrom: string null,
              other_locations: string null,
              error: string null,
-             gene_no: uint64>
+             gene_no: int64>
             [gene_id=0:*,1000000,0]
             ),
         TCGA_${DATE}_GENE_STD
@@ -80,5 +80,5 @@ store(
     TCGA_${DATE}_GENE_STD
     )"
      
-        
+       
 iquery -anq "remove(TCGA_GENE_LOAD_BUF)"
