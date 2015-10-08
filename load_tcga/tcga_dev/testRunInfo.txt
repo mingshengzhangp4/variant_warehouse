@@ -1,0 +1,38 @@
+scidb@ip-172-31-31-127:~/variant_warehouse/load_tcga/tcga_dev$ iquery -aq "op_count(TCGA_2014_06_14_HUMANMETHYLATION450_PROBE_STD)"
+{i} count
+{0} 525986
+scidb@ip-172-31-31-127:~/variant_warehouse/load_tcga/tcga_dev$ iquery -aq "show(TCGA_2014_06_14_HUMANMETHYLATION450_PROBE_STD)"
+{i} schema
+{0} 'TCGA_2014_06_14_HUMANMETHYLATION450_PROBE_STD<probe_name:string,reference_chromosome:string,genomic_start:uint64,genomic_end:uint64,reference_gene_symbols:string> [gene_id=0:*,10000,0,humanmethylation450_probe_id=0:*,1000,0]'
+scidb@ip-172-31-31-127:~/variant_warehouse/load_tcga/tcga_dev$ iquery -aq "aggregate(TCGA_2014_06_14_HUMANMETHYLATION450_PROBE_STD, count(*), humanmethylation450_probe_id)"
+{humanmethylation450_probe_id} count
+{0} 1
+{1} 2
+{2} 2
+{3} 1
+{4} 1
+...
+cidb@ip-172-31-31-127:~/variant_warehouse/load_tcga/tcga_dev$ iquery -aq "filter(TCGA_2014_06_14_HUMANMETHYLATION450_PROBE_STD, humanmehtylation450_probe_id=223323)"
+UserQueryException in file: src/query/parser/Translator.cpp function: checkLogicalExpression line: 2033
+Error id: scidb::SCIDB_SE_SYNTAX::SCIDB_LE_UNKNOWN_ATTRIBUTE_OR_DIMENSION
+Error description: Query syntax error. Attribute or dimension reference 'humanmehtylation450_probe_id' does not exist.
+filter(TCGA_2014_06_14_HUMANMETHYLATION450_PROBE_STD, humanmehtylation450_probe_id=223323)
+                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scidb@ip-172-31-31-127:~/variant_warehouse/load_tcga/tcga_dev$ iquery -aq "show(TCGA_2014_06_14_HUMANMETHYLATION450_PROBE_STD)"
+{i} schema
+{0} 'TCGA_2014_06_14_HUMANMETHYLATION450_PROBE_STD<probe_name:string,reference_chromosome:string,genomic_start:uint64,genomic_end:uint64,reference_gene_symbols:string> [gene_id=0:*,10000,0,humanmethylation450_probe_id=0:*,1000,0]'
+scidb@ip-172-31-31-127:~/variant_warehouse/load_tcga/tcga_dev$ iquery -aq "filter(TCGA_2014_06_14_HUMANMETHYLATION450_PROBE_STD,humanmethylation450_probe_id=223323)"
+{gene_id,humanmethylation450_probe_id} probe_name,reference_chromosome,genomic_start,genomic_end,reference_gene_symbols
+{9336,223323} 'CG21417675','7',128695180,128695180,'|TPI1P2|TNPO3|'
+{42958,223323} 'CG21417675','7',128695180,128695180,'|TPI1P2|TNPO3|'
+scidb@ip-172-31-31-127:~/variant_warehouse/load_tcga/tcga_dev$ iquery -aq "filter(TCGA_2014_06_14_HUMANMETHYLATION450_STD,sample_id=1234,humanmethylation450_probe_id=223323)"
+UserQueryException in file: src/query/parser/Translator.cpp function: passAFLOperator line: 535
+Error id: scidb::SCIDB_SE_SYNTAX::SCIDB_LE_WRONG_OPERATOR_ARGUMENTS_COUNT
+Error description: Query syntax error. Operator 'filter' expected 2 argument(s) but was passed 3.
+filter(TCGA_2014_06_14_HUMANMETHYLATION450_STD,sample_id=1234,humanmethylation450_probe_id=223323)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scidb@ip-172-31-31-127:~/variant_warehouse/load_tcga/tcga_dev$ iquery -aq "filter(TCGA_2014_06_14_HUMANMETHYLATION450_STD,sample_id=1234 and humanmethylation450_probe_id=223323)"
+{tumor_type_id,sample_id,humanmethylation450_probe_id} value
+{2,1234,223323} 0.0363023
+
+

@@ -198,3 +198,85 @@ update/insert: TCGA_{DATE}_SAMPLE_STD
 update/insert: TCGA_{GATE}_GENE_STD
 
 
+********************************************************************
+********************************************************************
+
+METHYLATION array
+
+*********************************************************************
+*********************************************************************
+
+** data URL **
+
+ wget http://gdac.broadinstitute.org/runs/stddata__2015_06_01/data/BRCA/20150601/gdac.broadinstitute.org_BRCA.Merge_methylation__humanmethylation450__jhu_usc_edu__Level_3__within_bioassay_data_set_function__data.Level_3.2015060100.0.0.tar.gz
+
+
+** file structure in tar.gz **
+MANIFEST.txt
+ACC.methylation__humanmethylation450__jhu_usc_edu__Level_3__within_bioassay_data_set_function__data.data.txt
+
+** Content of data file **
+
+column# == fields = 4 * sample# + 1
+row# == records = 485579 = gene/probe# + 2
+
+line 0 ('|' inserted to group fields):
+Hybridization REF |  TCGA-OR-A5J1-01A-11D-A29J-05    TCGA-OR-A5J1-01A-11D-A29J-05    TCGA-OR-A5J1-01A-11D-A29J-05    TCGA-OR-A5J1-01A-11D-A29J-05  |  TCGA-OR-A5J2-01A-11D-A29J-05    TCGA-OR-A5J2-01A-11D-A29J-05    TCGA-OR-A5J2-01A-11D-A29J-05   TCGA-OR-A5J2-01A-11D-A29J-05 | ...
+
+line 1:
+Composite Element REF |  Beta_value      Gene_Symbol     Chromosome      Genomic_Coordinate  |   Beta_value      Gene_Symbol     Chromosome      Genomic_Coordinate | ...
+
+line 2:
+cg00000029   |   0.119877013723081       RBL2    16      53468112   |    0.107120474727399       RBL2    16      53468112 | ... 
+
+line 3:
+cg00000108   |   NA      C3orf35     3    37459206  |     NA      C3orf35    3      37459206 | ...
+
+....
+
+line 485578: 
+rs9839873   |    0.708642513847403       NA      NA    0   |    0.94338354578915        NA      NA      0  | ...     
+
+  ::NOTE::
+  entries with Gene_Symbol == NA will be discarded, and not loaded
+
+
+** scidb array schema **
+
+ TCGA_${DATE}_METHYLATION_STD
+ <beta_value:int64 null>
+ [tumor_type_id=0:*,1,0,
+  gene_id=0:*,1000000,0,
+  sample_id=0:*,1000,0]"
+
+
+
+** loading scripts **
+
+1. input data preprossor (python parser)
+
+https://github.com/Paradigm4/variant_warehouse/load_tcga/tcga_dev/methylation_file_parser.py
+  input:ACC.methylation__humanmethylation450__jhu_usc_edu__Level_3__within_bioassay_data_set_function__data.data.txt
+  outputs:
+      (1) methyl_sample_barcodes.txt(\n separated ascii file)
+          TCGA-OR-A5J1-01A-11D-A29J-05
+          TCGA-OR-A5J2-01A-11D-A29J-05
+          ...
+      (2) methyl_genes.txt ('NA' excluded)
+          RBL2
+          TP53
+          ...
+      (3) methyl_data.txt
+          RBL2 0.78 0.21 ...
+          TP53 0.99 0.32 ...
+          ...
+2. mythylation data loader
+
+https://github.com/Paradigm4/variant_warehouse/load_tcga/tcga_dev/load_methylation.sh
+
+include-
+update/insert: TCGA_{DATE}_PATIENT_STD
+update/insert: TCGA_{DATE}_SAMPLE_STD
+update/insert: TCGA_{GATE}_GENE_STD
+
+
