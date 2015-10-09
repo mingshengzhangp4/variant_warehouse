@@ -124,7 +124,7 @@ insert(
 
 # update sample array #
 iquery -anq"
-store(
+insert(
   redimension(
     index_lookup(
       apply(

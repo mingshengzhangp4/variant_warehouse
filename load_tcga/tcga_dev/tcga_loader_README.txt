@@ -218,7 +218,7 @@ ACC.methylation__humanmethylation450__jhu_usc_edu__Level_3__within_bioassay_data
 ** Content of data file **
 
 column# == fields = 4 * sample# + 1
-row# == records = 485579 = gene/probe# + 2
+row# == records = 485579 = probe# + 2
 
 line 0 ('|' inserted to group fields):
 Hybridization REF |  TCGA-OR-A5J1-01A-11D-A29J-05    TCGA-OR-A5J1-01A-11D-A29J-05    TCGA-OR-A5J1-01A-11D-A29J-05    TCGA-OR-A5J1-01A-11D-A29J-05  |  TCGA-OR-A5J2-01A-11D-A29J-05    TCGA-OR-A5J2-01A-11D-A29J-05    TCGA-OR-A5J2-01A-11D-A29J-05   TCGA-OR-A5J2-01A-11D-A29J-05 | ...
@@ -232,23 +232,41 @@ cg00000029   |   0.119877013723081       RBL2    16      53468112   |    0.10712
 line 3:
 cg00000108   |   NA      C3orf35     3    37459206  |     NA      C3orf35    3      37459206 | ...
 
+...
+
+line n:
+cg02045224   |  0.0287637195761093 TP53;WRAP53  17  7591618 |  0.0176466187097269  TP53;WRAP53  17  7591618 | ...
+
 ....
 
 line 485578: 
 rs9839873   |    0.708642513847403       NA      NA    0   |    0.94338354578915        NA      NA      0  | ...     
 
-  ::NOTE::
-  entries with Gene_Symbol == NA will be discarded, and not loaded
+  @@ NOTE @@
+  each probe may correspond to 1 or more or 'NA' gene_symbols; entries with 'NA' gene_symbols are excluded
 
 
 ** scidb array schema **
 
- TCGA_${DATE}_METHYLATION_STD
- <beta_value:int64 null>
- [tumor_type_id=0:*,1,0,
-  gene_id=0:*,1000000,0,
-  sample_id=0:*,1000,0]"
 
+TCGA_${DATE}_HUMANMETHYLATION450_PROBE_STD
+<probe_name:string,
+reference_chromosome:string,
+genomic_start:int64,
+genomic_end:int64,
+reference_gene_symbols:string>
+[gene_id=0:*,1000000,0,
+humanmethylation450_probe_id=0:*,1000,0]
+
+ @@ NOTE @@
+  reference_gene_symbols could look like "TP53",  "TP53|WRAP53", but not "NA"
+
+
+ TCGA_${DATE}_HUMANMETHYLATION450_STD
+ <value:int64 null>
+ [tumor_type_id=0:*,1,0,
+  sample_id=0:*,1000,0,
+  humanmethylation450_probe_id=0:*,1000]"
 
 
 ** loading scripts **
@@ -262,15 +280,27 @@ https://github.com/Paradigm4/variant_warehouse/load_tcga/tcga_dev/methylation_fi
           TCGA-OR-A5J1-01A-11D-A29J-05
           TCGA-OR-A5J2-01A-11D-A29J-05
           ...
+
       (2) methyl_genes.txt ('NA' excluded)
+
           RBL2
           TP53
           ...
-      (3) methyl_data.txt
-          RBL2 0.78 0.21 ...
-          TP53 0.99 0.32 ...
+
+      (3) methyl_probe_data.txt
+          probe_name  gene_symbol  reference_chromosome genomic_start genomic_end reference_gene_symbols
+           cg02045224   TP53               17              7591618        7591618     TP53;WRAP53  
+           cg02045224   WRAP53             17              7591618        7591618     TP53;WRAP53
+           cg00000029   RBL2               16              53468112       53468112      RBL2
+           ...
+
+      (4) methyl_data.txt
+          cg00000108 0.78 0.21 ...
+          cg00000029 0.99 0.32 ...
           ...
-2. mythylation data loader
+
+
+2. methylation data loader
 
 https://github.com/Paradigm4/variant_warehouse/load_tcga/tcga_dev/load_methylation.sh
 
