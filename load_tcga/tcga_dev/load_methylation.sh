@@ -274,7 +274,7 @@ store(
 ## humanmethylation450_probe_id=0:*,1000,0]"
 
 
-iquery -aq "
+iquery -anq "
 store(
   redimension(
     apply(
@@ -348,7 +348,7 @@ store(
 ##   sample_id=0:*,1000,0,
 ##   humanmethylation450_probe_id=0:*,1000, 0]"
 
-iquery -aq "
+iquery -anq "
 insert(cast(
   project(
     apply(

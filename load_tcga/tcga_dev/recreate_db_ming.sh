@@ -76,10 +76,10 @@ iquery -anq "create array TCGA_${DATE}_RNAseqV2_STD
 iquery -anq "create array
 TCGA_${DATE}_HUMANMETHYLATION450_PROBE_STD
 <probe_name:string null,
-reference_chromosome:string,
-genomic_start:int64,
-genomic_end:int64,
-reference_gene_symbols:string>
+reference_chromosome:string null,
+genomic_start:int64 null,
+genomic_end:int64 null,
+reference_gene_symbols:string null>
 [gene_id=0:*,1000000,0,
 humanmethylation450_probe_id=0:*,1000,0]"
 
@@ -89,7 +89,6 @@ iquery -anq "create array
  [tumor_type_id=0:*,1,0,
   sample_id=0:*,1000,0,
   humanmethylation450_probe_id=0:*,1000,0]"
-
 
 
 MYDIR=`pwd`
