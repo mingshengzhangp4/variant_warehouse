@@ -259,7 +259,7 @@ reference_gene_symbols:string>
 humanmethylation450_probe_id=0:*,1000,0]
 
  @@ NOTE @@
-  reference_gene_symbols could look like "TP53",  "TP53|WRAP53", but not "NA"
+  reference_gene_symbols could look like "TP53",  "TP53|WRAP53", but not "NA", which is discarded
 
 
  TCGA_${DATE}_HUMANMETHYLATION450_STD

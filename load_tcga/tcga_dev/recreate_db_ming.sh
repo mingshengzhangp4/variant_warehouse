@@ -22,7 +22,7 @@ iquery -anq "remove(TCGA_${DATE}_MUTATION_STD)"     > /dev/null 2>&1
 iquery -anq "remove(TCGA_${DATE}_RNAseqV2_STD)"     > /dev/null 2>&1
 
 
-iquery -aq "create array TCGA_${DATE}_TUMOR_TYPE_STD  <tumor_type_name:string> [tumor_type_id]"
+iquery -aq "create array TCGA_${DATE}_TUMOR_TYPE_STD  <tumor_type_name:string> [tumor_type_id=0:*, 1,0]"
 
 
 
@@ -86,10 +86,10 @@ humanmethylation450_probe_id=0:*,1000,0]"
 
 iquery -anq "create array
  TCGA_${DATE}_HUMANMETHYLATION450_STD
- <value:int64 null>
+ <value:double null>
  [tumor_type_id=0:*,1,0,
   sample_id=0:*,1000,0,
-  humanmethylation450_probe_id=0:*,1000]"
+  humanmethylation450_probe_id=0:*,1000,0]"
 
 
 

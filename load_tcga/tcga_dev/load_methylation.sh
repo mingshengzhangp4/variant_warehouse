@@ -11,7 +11,6 @@ TUMOR=$2
 DATE_SHORT=`echo $DATE | sed  "s/_//g"`
 echo $DATE_SHORT
 
-## iquery -anq "remove(TCGA_${DATE}_METHYLATION_STD)"
 
 cwd=`pwd`
 path_downloaded=${cwd}/tcga_download
@@ -59,7 +58,7 @@ done
 
 ## ## update patient array ##
 ## 
-## sampleBarCodeFile=${cwd}/methyl_sample_barcodes.txt
+ sampleBarCodeFile=${cwd}/methyl_sample_barcodes.txt
 ## iquery -anq "
 ## insert(
 ##   redimension(
@@ -281,75 +280,94 @@ done
 
 
 
-## build the probe array first (the probe index is needed for the construct methyl data array) ##
-
-probe_file=${cwd}/methyl_probe_data.txt
-
-
-iquery -anq "remove(TCGA_PROBE_LOAD_BUF)"    > /dev/null 2>&1
-
-chunk_size=1000
- 
-iquery -anq "create temp array TCGA_PROBE_LOAD_BUF
-<probe_name:string null,
- gene_symbol:string null,
- reference_chromosome:string null,
- genomic_start_:string null,
- genomic_end_:string null,
- reference_gene_symbols:string null,
- error: string null>
-[source_instance_id = 0:*,1,0,
- chunk_number       = 0:*,1,0,
- line_number        = 0:*,${chunk_size},0]"
-
-iquery -anq "
-store(
-  parse(
-    split('${probe_file}', 'lines_per_chunk=${chunk_size}'),
-    'chunk_size=${chunk_size}', 'num_attributes=6'),
-  TCGA_PROBE_LOAD_BUF)"
-
-iquery -anq "remove(TCGA_${DATE}_HUMANMETHYLATION450_PROBE_STD)"
-iquery -anq "create array
-TCGA_${DATE}_HUMANMETHYLATION450_PROBE_STD
-<probe_name:string null,
-reference_chromosome:string null,
-genomic_start:int64 null,
-genomic_end:int64 null,
-reference_gene_symbols:string null>
-[gene_id=0:*,1000000,0,
-humanmethylation450_probe_id=0:*,1000,0]"
-
-
-iquery -aq "
-redimension(
-  apply(
-    index_lookup(
-      apply(TCGA_PROBE_LOAD_BUF,
-        probe_id,
-        chunk_number * ${chunk_size} + line_number
-        ) as A,
-      substitute(
-        redimension(
-          TCGA_${DATE}_GENE_STD,
-          <gene_symbol:string null>
-          [gene_id=0:*, 1000000,0]
-          ),
-        build(<subval:string>[i=0:0,1,0],'_'),
-        gene_symbol
-        ),
-      A.gene_symbol, gene_id
-      ),
-    humanmethylation450_probe_id, probe_id,
-    genomic_start, dcast(genomic_start_,int64(null)),
-    genomic_end, dcast(genomic_start_, int64(null))
-    ),
-  TCGA_${DATE}_HUMANMETHYLATION450_PROBE_STD)
-  
-"
+## ## build the probe array first (the probe index is needed for the construct methyl data array) ##
+## 
+## probe_file=${cwd}/methyl_probe_data.txt
+## 
+## 
+## iquery -anq "remove(TCGA_PROBE_LOAD_BUF)"    > /dev/null 2>&1
+## 
+## chunk_size=1000
+##  
+## iquery -anq "create temp array TCGA_PROBE_LOAD_BUF
+## <probe_name:string null,
+##  gene_symbol:string null,
+##  reference_chromosome:string null,
+##  genomic_start_:string null,
+##  genomic_end_:string null,
+##  reference_gene_symbols:string null,
+##  error: string null>
+## [source_instance_id = 0:*,1,0,
+##  chunk_number       = 0:*,1,0,
+##  line_number        = 0:*,${chunk_size},0]"
+## 
+## iquery -anq "
+## store(
+##   parse(
+##     split('${probe_file}', 'lines_per_chunk=${chunk_size}'),
+##     'chunk_size=${chunk_size}', 'num_attributes=6'),
+##   TCGA_PROBE_LOAD_BUF)"
+## 
+## iquery -anq "remove(TCGA_${DATE}_HUMANMETHYLATION450_PROBE_STD)"
+## iquery -anq "create array
+## TCGA_${DATE}_HUMANMETHYLATION450_PROBE_STD
+## <probe_name:string null,
+## reference_chromosome:string null,
+## genomic_start:int64 null,
+## genomic_end:int64 null,
+## reference_gene_symbols:string null>
+## [gene_id=0:*,1000000,0,
+## humanmethylation450_probe_id=0:*,1000,0]"
 
 
-echo "debuging..."
+## iquery -aq "
+##         apply(TCGA_PROBE_LOAD_BUF,
+##           entry_id,
+##           chunk_number * ${chunk_size} + line_number
+##           )
+## "
+
+## iquery -aq "
+## store(
+##   redimension(
+##     apply(
+##       index_lookup(
+##         index_lookup(
+##           TCGA_PROBE_LOAD_BUF,
+##           substitute(
+##             redimension(
+##               TCGA_${DATE}_GENE_STD,
+##               <gene_symbol:string null>
+##               [gene_id=0:*, 1000000,0]
+##               ),
+##             build(<subval:string>[i=0:0,1,0],'_'),
+##             gene_symbol
+##             ),
+##           TCGA_PROBE_LOAD_BUF.gene_symbol,
+##           gene_index) as A,
+##         substitute(
+##           uniq(sort(
+##             project(TCGA_PROBE_LOAD_BUF,
+##             probe_name
+##               )
+##             )),
+##           build(<subval:string>[i=0:0,1,0], '_')
+##           ),
+##         A.probe_name,
+##         probe_index
+##       ),
+##       gene_id, gene_index,
+##       humanmethylation450_probe_id, probe_index,
+##       genomic_start, dcast(genomic_start_, int64(null)),
+##       genomic_end, dcast(genomic_end_, int64(null))
+##       ),
+##     TCGA_${DATE}_HUMANMETHYLATION450_PROBE_STD
+##     ),
+## TCGA_${DATE}_HUMANMETHYLATION450_PROBE_STD
+## )"
+
+
+echo "debuging probe load buf..."
 select yn in "yes" "no"; do
     case $yn in 
         yes) break;;
@@ -359,10 +377,12 @@ done
 
 
 
-
+## finally, build methylation data array proper ##
 methyl_dataFile=${cwd}/methyl_data.txt
 column_no=`cat ${methyl_dataFile}|awk -F'\t' '{print NF}' |head -n 1|awk '{print $1}'`
  
+
+
 
 ## iquery -anq "remove(TCGA_METHYLATION_LOAD_BUF)"    > /dev/null 2>&1
 ##   
@@ -385,147 +405,95 @@ column_no=`cat ${methyl_dataFile}|awk -F'\t' '{print NF}' |head -n 1|awk '{print
 ##  TCGA_METHYLATION_LOAD_BUF
 ## )" 
 
-##                           input(
-##                             <sample_barcode:string> [sampleID=0:*,1000,0],
-##                             '${sampleBarCodeFile}', 0, 'tsv'
-##                             ),
-#
-sampleBarCodeFile=${cwd}/methyl_sample_barcodes.txt 
+
+## iquery -anq "remove(TCGA_${DATE}_METHYLATION_STD)"
+
+iquery -anq "create array
+ TCGA_${DATE}_HUMANMETHYLATION450_STD
+ <value:double null>
+ [tumor_type_id=0:*,1,0,
+  sample_id=0:*,1000,0,
+  humanmethylation450_probe_id=0:*,1000, 0]"
+
+
+
+
+
 iquery -aq "
-
-                      cross_join(
-                        between(
-                          redimension(
-                            apply(
-                                TCGA_METHYLATION_LOAD_BUF,
-                                probe_id,
-                                1000*chunk_number + line_number
-                              ),
-                            <val:string null>
-                            [col_number=0:*,1000000,0,
-                             probe_id=0:*,1000,0]
-                            ),
-                          0, null, $((column_no-1)), null
-                          ) as G,
-                        apply(
-                          input(
-                            <sample_barcode:string>
-                            [sample_id=0:*, 1000000,0],
-                            '${sampleBarCodeFile}',
-                            0,
-                            'tsv'
-                            ),
-                          sample_name,
-                          substr(sample_barcode, 0, 16)
-                          ),
-
-                        G.col_number,
-                        sample_id
-                        )                     "
-
-echo "debuging..."
-select yn in "yes" "no"; do
-    case $yn in 
-        yes) break;;
-        no) exit 1;;
-    esac
-done
-
-## loading METHYLATION data in one step; for two steps, see what follows ##
-iquery -anq "
-insert(
-  redimension(
-    cast(
-      substitute(
+insert(cast(
+  project(
+    apply(
+      redimension(
         project(
           index_lookup(
-            index_lookup(
-              apply(
-                index_lookup(
-                  apply(
+            apply(
+              index_lookup(
+                apply(
+                  index_lookup(                         
                     cross_join(
+                      between(
+                        TCGA_METHYLATION_LOAD_BUF, 
+                        null, null, null, 0, null, null, null,0
+                        ) as probes,
                       cross_join(
                         between(
-                          redimension(
-                            apply(
-                                TCGA_METHYLATION_LOAD_BUF,
-                                probe_id,
-                                1000*chunk_number + line_number
-                              ),
-                            <val:string null>
-                            [col_number=0:*,1000000,0,
-                             probe_id=0:*,1000,0]
-                            ),
-                          0, null, $((column_no-1)), null
-                          ) as G,
-                        apply(
-                          input(
-                            <sample_barcode:string>
-                            [sample_id=0:*, 1000000,0],
-                            '${sampleBarCodeFile}',
-                            0,
-                            'tsv'
-                            ),
-                          sample_name,
-                          substr(sample_barcode, 0, 16)
-                          ),
-                        G.col_number,
-                        sample_id
-                        ) as U,
-
-                      input(
-                       <entrezID:string null>
-                       [probe_id=0:*, 1000,0],
-                       '${Entrez_geneList}',
-                       0,
-                       'tsv'
-                       ) as N,
-                      U.probe_id,
-                      N.probe_id
+                         TCGA_METHYLATION_LOAD_BUF, 
+                         null, null, null, 1, null, null, null,$((column_no-1))
+                         ) as samples,
+                        input(
+                          <sample_barcode:string> [sampleID=0:*,1000,0],
+                          '${sampleBarCodeFile}', 0, 'tsv'
+                          ) as S,
+                        samples.col_number, S.sampleID
+                        ),
+                      probes.source_instance_id, samples.source_instance_id,  
+                      probes.chunk_number, samples.chunk_number,
+                      probes.line_number, samples.line_number
                       ),
-                    ttn, '${TUMOR}',
-                    val, dcast(expression, double(null))
-                    ) as V,
-                  TCGA_${DATE}_TUMOR_TYPE_STD,
-                  V.ttn,
-                  tumor_type_id) as W,
-                entrez_geneID,
-                dcast(W.entrezID, int64(null))
-                ) as VW,
-              substitute(
-                project(TCGA_${DATE}_GENE_STD,entrez_geneID),
-                build(<subVal:int64>[i=0:0,1,0],0),
-                entrez_geneID
+                    redimension(
+                      substitute( 
+                        apply(
+                          project(
+                            TCGA_${DATE}_HUMANMETHYLATION450_PROBE_STD,
+                            probe_name
+                            ),
+                          probe_id, humanmethylation450_probe_id
+                          ),
+                        build(<subval:string>[i=0:0,1,0],'_'),
+                        probe_name),
+                      <probe_name:string>
+                      [humanmethylation450_probe_id=0:*,1000,0]
+                      ) as P,
+                    probes.val, humanmethylation450_probe_id
+                    ),
+                  sample_name, substr(S.sample_barcode, 0,16)
+                  ) as M,
+                redimension(
+                  TCGA_${DATE}_SAMPLE_STD,
+                  <sample_name:string>[sample_id = 0:*,1000,0]
+                  ),
+                M.sample_name, sample_id
                 ),
-              VW.entrez_geneID,
-              en_geneID
-              ) as H,
-            redimension(
-              TCGA_${DATE}_SAMPLE_STD,
-              <sample_name:string>[sample_id=0:*,1000000,0]
+              tumor_type, '${TUMOR}'
               ),
-            H.sample_name,
-            sample_id
+            TCGA_${DATE}_TUMOR_TYPE_STD,
+            tumor_type,
+            tumor_type_id
             ),
-          tumor_type_id,
-          en_geneID,
-          sample_id,
-          val
+          samples.val, sample_id,humanmethylation450_probe_id
           ),
-        build(<subVal:int64>[i=0:0,1,0], 0),
-        tumor_type_id, en_geneID, sample_id
+        <val: string null>
+        [tumor_type_id = 0:*,1,0,
+         sample_id = 0:*,1000,0,
+         humanmethylation450_probe_id=0:*,1000,0]
         ),
-      <tumor_type_id: int64,
-       probe_id: int64,
-       sample_id: int64,
-       val:double null>
-      [i=0:*,1000,0,
-       j=0:*,1000,0]
+      val_NAreplaced, dcast(val, double(null))
       ),
-    TCGA_${DATE}_METHYLATION_STD
+    val_NAreplaced
     ),
-  TCGA_${DATE}_METHYLATION_STD
-  )"
+  TCGA_${DATE}_HUMANMETHYLATION450_STD),TCGA_${DATE}_HUMANMETHYLATION450_STD)
+"
+
 
 
 iquery -anq "remove(TCGA_METHYLATION_LOAD_BUF)"    > /dev/null 2>&1
