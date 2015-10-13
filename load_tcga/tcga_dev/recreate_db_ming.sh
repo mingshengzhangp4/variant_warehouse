@@ -20,13 +20,12 @@ iquery -anq "remove(TCGA_${DATE}_CLINICAL_STD)"     > /dev/null 2>&1
 iquery -anq "remove(TCGA_${DATE}_GENE_STD)"         > /dev/null 2>&1
 iquery -anq "remove(TCGA_${DATE}_MUTATION_STD)"     > /dev/null 2>&1
 iquery -anq "remove(TCGA_${DATE}_RNAseqV2_STD)"     > /dev/null 2>&1
+iquery -anq "remove(TCGA_${DATE}_HUMANMETHYLATION450_PROBE_STD)" > /dev/null 2>&1
+iquery -anq "remove(TCGA_${DATE}_HUMANMETHYLATION450_STD)" > /dev/null 2>&1
 
 
-iquery -aq "create array TCGA_${DATE}_TUMOR_TYPE_STD  <tumor_type_name:string> [tumor_type_id=0:*, 1,0]"
-
-
-
-iquery -aq "create array TCGA_${DATE}_SAMPLE_TYPE_STD <code:string,definition:string,short_letter_code:string> [sample_type_id]"
+iquery -aq "create array TCGA_${DATE}_TUMOR_TYPE_STD  <tumor_type_name:string> [tumor_type_id=0:*,1,0]"
+iquery -aq "create array TCGA_${DATE}_SAMPLE_TYPE_STD <code:string,definition:string,short_letter_code:string> [sample_type_id=0:*,1,0]"
 iquery -aq "create array TCGA_${DATE}_SAMPLE_STD <sample_name:string> [tumor_type_id=0:*,1,0, patient_id=0:*,1000,0, sample_type_id=0:*,1,0,sample_id=0:*,1000,0]"
 iquery -aq "create array TCGA_${DATE}_PATIENT_STD  <patient_name:string> [tumor_type_id=0:*,1,0,patient_id=0:*,1000,0]"
 
@@ -76,7 +75,7 @@ iquery -anq "create array TCGA_${DATE}_RNAseqV2_STD
 
 iquery -anq "create array
 TCGA_${DATE}_HUMANMETHYLATION450_PROBE_STD
-<probe_name:string,
+<probe_name:string null,
 reference_chromosome:string,
 genomic_start:int64,
 genomic_end:int64,
