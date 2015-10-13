@@ -15,28 +15,25 @@ echo $DATE_SHORT
 cwd=`pwd`
 path_downloaded=${cwd}/tcga_download
 
-rm -rf ${path_downloaded}
-
 mkdir -p ${path_downloaded}
 
-#### wget http://gdac.broadinstitute.org/runs/stddata__2015_06_01/data/BRCA/20150601/gdac.broadinstitute.org_BRCA.Merge_methylation__humanmethylation450__jhu_usc_edu__Level_3__within_bioassay_data_set_function__data.Level_3.2015060100.0.0.tar.gz
-
+#### wget http://gdac.broadinstitute.org/runs/stddata__2015_06_01/data/BRCA/20150601/gdac.broadinstitute.org_BRCA.Merge_snp__genome_wide_snp_6__broad_mit_edu__Level_3__segmented_scna_minus_germline_cnv_hg19__seg.Level_3.2015060100.0.0.tar.gz
 
 {
-wget -nv  -P ${path_downloaded}  http://gdac.broadinstitute.org/runs/stddata__${DATE}/data/${TUMOR}/${DATE_SHORT}/gdac.broadinstitute.org_${TUMOR}.Merge_methylation__humanmethylation450__jhu_usc_edu__Level_3__within_bioassay_data_set_function__data.Level_3.${DATE_SHORT}00.0.0.tar.gz
+wget -nv -P ${path_downloaded}  http://gdac.broadinstitute.org/runs/stddata__${DATE}/data/${TUMOR}/${DATE_SHORT}/gdac.broadinstitute.org_${TUMOR}.Merge_snp__genome_wide_snp_6__broad_mit_edu__Level_3__segmented_scna_minus_germline_cnv_hg19__seg.Level_3.${DATE_SHORT}00.0.0.tar.gz
 } ||{
 echo "This file does not exist:"
-echo http://gdac.broadinstitute.org/runs/stddata__${DATE}/data/${TUMOR}/${DATE_SHORT}/gdac.broadinstitute.org_${TUMOR}.Merge_methylation__humanmethylation450__jhu_usc_edu__Level_3__within_bioassay_data_set_function__data.Level_3.${DATE_SHORT}00.0.0.tar.gz
+echo http://gdac.broadinstitute.org/runs/stddata__${DATE}/data/${TUMOR}/${DATE_SHORT}/gdac.broadinstitute.org_${TUMOR}.Merge_snp__genome_wide_snp_6__broad_mit_edu__Level_3__segmented_scna_minus_germline_cnv_hg19__seg.Level_3.${DATE_SHORT}00.0.0.tar.gz
 echo "exiting ..."
 exit 1
 }
 
-tar -zxvf ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_methylation__humanmethylation450__jhu_usc_edu__Level_3__within_bioassay_data_set_function__data.Level_3.${DATE_SHORT}00.0.0.tar.gz --directory ${path_downloaded}/
+tar -zxvf ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_snp__genome_wide_snp_6__broad_mit_edu__Level_3__segmented_scna_minus_germline_cnv_hg19__seg.Level_3.${DATE_SHORT}00.0.0.tar.gz --directory ${path_downloaded}/
 
 
   ##  create intermediate tsv files for easy loading  ##
 
-input_path=${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_methylation__humanmethylation450__jhu_usc_edu__Level_3__within_bioassay_data_set_function__data.Level_3.${DATE_SHORT}00.0.0
+input_path=${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_snp__genome_wide_snp_6__broad_mit_edu__Level_3__segmented_scna_minus_germline_cnv_hg19__seg.Level_3.${DATE_SHORT}00.0.0
 methyl_file=${TUMOR}.methylation__humanmethylation450__jhu_usc_edu__Level_3__within_bioassay_data_set_function__data.data.txt
 input_file=${input_path}/${methyl_file}
 python methylation_file_parser.py ${input_file}
@@ -426,7 +423,7 @@ insert(cast(
 "
 
 iquery -anq "remove(TCGA_METHYLATION_LOAD_BUF)"    > /dev/null 2>&1
-rm -rf ${path_downloaded}
+rm -rf  ${path_downloaded}
 rm ${methyl_dataFile}
 rm ${probe_file}
 rm ${geneFile}
