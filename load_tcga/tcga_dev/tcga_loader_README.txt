@@ -310,3 +310,216 @@ update/insert: TCGA_{DATE}_SAMPLE_STD
 update/insert: TCGA_{GATE}_GENE_STD
 
 
+********************************************************************
+********************************************************************
+
+CNV array
+
+*********************************************************************
+*********************************************************************
+
+** data URL **
+
+wget http://gdac.broadinstitute.org/runs/stddata__2015_06_01/data/BRCA/20150601/gdac.broadinstitute.org_BRCA.Merge_snp__genome_wide_snp_6__broad_mit_edu__Level_3__segmented_scna_minus_germline_cnv_hg19__seg.Level_3.2015060100.0.0.tar.gz
+
+
+** file structure in tar.gz **
+MANIFEST.txt
+ACC.snp__genome_wide_snp_6__broad_mit_edu__Level_3__segmented_scna_minus_germline_cnv_hg19__seg.seg.txt
+
+
+** Content of data file **
+
+          Sample            Chromosome	Start	   End	     Num_Probes	  Segment_Mean
+TCGA-OR-A5J1-10A-01D-A29K-01	1	3218610	  247813706	128989	1e-04
+TCGA-OR-A5J1-10A-01D-A29K-01	2	484222	   45753961	26796	0.0073
+TCGA-OR-A5J1-10A-01D-A29K-01	2	45759027   45759054	2	-1.6119
+TCGA-OR-A5J1-10A-01D-A29K-01	2	45764419   167211490	61083	0.0067
+    ... (21053 rows)
+
+** scidb array schema **
+
+
+TCGA_${DATE}_GENOME_WIDE_SNP_6_PROBE_STD
+<probe_name:string,
+reference_chromosome:string,
+genomic_start:int64,
+genomic_end:int64,
+reference_gene_symbols:string>
+[gene_id=0:*,1000000,0,
+genome_wide_snp_6_probe_id=0:*,1000,0]
+
+TCGA_${DATE}_GENOME_WIDE_SNP_6_STD
+<value:double null>
+[tumor_type_id=0:*,1,0,
+ sample_id=0:*,1000,0,
+ genome_wide_snp_6_probe_id=0:*,1000]"
+
+
+ @@ NOTE @@
+  probe_name = gene_symbols + [ |_MAX|_MIN]
+
+iquery -aq "cross_join(TCGA_2014_06_14_GENOME_WIDE_SNP_6_STD as A, TCGA_2014_06_14_GENOME_WIDE_SNP_6_PROBE_STD as B, A.genome_wide_snp_6_probe_id, B.genome_wide_snp_6_probe_id)" | less
+
+{tumor_type_id,sample_id,genome_wide_snp_6_probe_id,gene_id} value,probe_name,reference_chromosome,genomic_start,genomic_end,reference_gene_symbols
+{0,0,3,2293} 0.2555,'"MIR3118-5"','',0,0,'|"MIR3118-5"|'
+{0,0,4,2304} -0.7854,'"MIR3118-6"','',0,0,'|"MIR3118-6"|'
+{0,0,5,6731} 0.1965,'"RNVU1-1"','',0,0,'|"RNVU1-1"|'
+{0,0,6,7968} 0.5576,'"RNVU1-9"','',0,0,'|"RNVU1-9"|'
+{0,0,7,5844} -0.3466,'3.8-1.3','',0,0,'|3.8-1.3|'
+{0,0,331,3120} 0.2348,'ABHD17B','',0,0,'|ABHD17B|'
+{0,0,334,3095} -0.2658,'ABHD17C','',0,0,'|ABHD17C|'
+{0,0,409,97} -0.2553,'ACAA1','',0,0,'|ACAA1|'
+{0,0,412,46} -0.226,'ACAA2','',0,0,'|ACAA2|'
+{0,0,416,139} 0.5517,'ACACA_MAX','',0,0,'|ACACA|'
+{0,0,417,139} 0.1796,'ACACA_MIN','',0,0,'|ACACA|'
+{0,0,418,146} 0.5675,'ACACB','',0,0,'|ACACB|'
+{0,0,421,182} 0.5675,'ACAD10','',0,0,'|ACAD10|'
+{0,0,424,178} -0.2458,'ACAD11','',0,0,'|ACAD11|'
+
+** loading scripts **
+
+1. input data preprossor (python parser: binary search on sorted list of [left_coord, gene_symbol])
+
+https://github.com/Paradigm4/variant_warehouse/load_tcga/tcga_dev/cnv_file_parser.py
+  input:ACC.snp__genome_wide_snp_6__broad_mit_edu__Level_3__segmented_scna_minus_germline_cnv_hg19__seg.seg.txt
+  outputs:
+      (1) cnv_sample_barcodes.txt(\n separated ascii file)
+          TCGA-OR-A5J1-01A-11D-A29J-05
+          TCGA-OR-A5J2-01A-11D-A29J-05
+          ...
+
+      (2) cnv_probe_data.txt
+          probe_name    gene_symbol    Chromosome	  Start	            End	
+            'ACAA1'   '|ACAA1|'     	2	          484222	   45753961
+          'ACACA_MAX' '|ACACA|'        	2	          484222	   45753961
+          'ACACA_MIN' '|ACACA|'         2	          484222	   45753961
+                ...
+          '"RNVU1-1"' '"RNVU1-1"'       17                435566           12345678
+                ...
+
+      (4) cnv_data.txt
+                     sample_barcode       probe_name     value
+          TCGA-OR-A5J1-10A-01D-A29K-01     'ACAA1'       -0.226 
+          TCGA-OR-A5J1-10A-01D-A29K-01   'ACACA_MAX'     0.5517
+          TCGA-OR-A5J1-10A-01D-A29K-01   'ACACA_MIN'     0.1796
+          TCGA-OR-A5J1-10A-01D-A29K-01   '"RNVU1-1"'     0.5675
+
+
+
+2. cnv data loader
+
+https://github.com/Paradigm4/variant_warehouse/load_tcga/tcga_dev/load_cnv.sh
+
+include-
+update/insert: TCGA_{DATE}_PATIENT_STD
+update/insert: TCGA_{DATE}_SAMPLE_STD
+
+3. algorithm
+
+  (1)  sample  --> chrom:segment_coordinate_value
+  (2)*  chrom:segment_coordinates --> mapped gene_list
+  (3) --> {sample1:[(gene_symbol1,[val1.0, val1.1,...]), (gene_symbol2, [val2.0, val2.1, ...]), ...],
+        sample2:[(gene_symbol1,[val1.0, val1.1,...]), (gene_symbol2, [val2.0, val2.1, ...]), ...],
+        ...
+       }
+  (4) --> 
+       gene_symbol -> probe_name: one-many
+       sample:probe_name -> value:  one-one
+       if len([valx.0, valx.1,...]) == 1,
+          proble_name = gene_symbol
+          val = vals
+       else: # multiple vals
+          probe_name = gene_symbol_MAX, val = max(vals)
+          probe_name = gene_symbol_MIN, val = max(vals)
+
+       sample1, probe_name1, val1,
+       sample1, probe_name2, val2,
+       ....
+       sample2, probe_name1, val,
+       sample2, probe_name2, val
+       ....
+
+  *(2) involves steps:
+      a) create gene list from gene list file (technically, tuple of list of tuple)
+           -> (
+                [(gene1.1, start_, end_), (gene1.2, start_, end_), ...],
+                [(gene2.1, start_, end_), (gene2.2, start_, end_), ...],
+                     ......
+                [(gene23.1, start_, end_), (gene23.2, start_, end_), ...], # X-chrom
+                [gene24.1, start_, end_), (gene24.2, start_, end_), ...]  # Y-chrom
+              )
+               
+      b) sorting the gene list by start_ of each chromosome
+      c) for each sample:chrom:segment_coordinates, binary search the above sorted list and find all genes fall into this segment.
+          i) start with the seg_left position; the target gene is noted 't_left'
+          ii) target window (one_side of window boundaries is moved at a time)
+              - starting window [gene_0, gene_(n-1)]
+              - checking boundary conditions
+                  if seg_left < gene_0
+                      t_left = gene_0
+                  else if seg_left > gene_(n-1)
+                      t-left = null
+                  else:
+                      starting iteration below
+              - general window [gene_i, gene_j]
+              - if seg_left in gene_i
+                    t_left = gene_i
+                else if seg_left in gene_(i+1)
+                    t_left = gene_(i+1)
+                else if seg_left < gene_(i+1)
+                    t_left = gene_(i+1)
+                else if seg_left in gene_j
+                    t_left = gene_j
+                else if seg_left in gene_(j-1)
+                    t_left = gene_(j-1)
+                else if seg_left > gene_(j-1)
+                    t_left = gene_j
+                else # find the new window
+                    middle = round((i+j)/2.0)
+                    if seg_left < gene_middle
+                        create new search window
+                           [gene_i, gene_middle]
+                    else # seg_left > gene_middle
+                        create new search window
+                           [gene_middle, gene_j]
+                    finally, new the new window to iterate, until t_left is found
+
+          iii) continue with the seg_right position; the target gene is noted 't_right'
+          iv) target window (one_side of window boundaries is moved at a time)
+              - starting window [t_left, gene_(n-1)]
+              - checking boundary conditions
+                  if seg_right < t_left or in t_left
+                      t_right = t_left
+                  else if seg_right > gene_(n-1)
+                      t-right = gene_(n-1)
+                  else:
+                      starting iteration below
+              - general window [gene_i, gene_j]
+              - if seg_right in gene_i
+                    t_right = gene_i
+                else if seg_right in gene_(i+1)
+                    t_right = gene_(i+1)
+                else if seg_right < gene_(i+1)
+                    t_right = gene_i
+                else if seg_right in gene_j
+                    t_right = gene_j
+                else if seg_right in gene_(j-1)
+                    t_right = gene_(j-1)
+                else if seg_right > gene_(j-1)
+                    t_right = gene_(j-1)
+                else # find the new window
+                    middle = round((i+j)/2.0)
+                    if seg_right < gene_middle
+                        create new search window
+                           [gene_i, gene_middle]
+                    else # seg_right > gene_middle
+                        create new search window
+                           [gene_middle, gene_j]
+                    finally, new the new window to iterate, until t_right is found
+
+          v) target gene list is [t_left, t_right]
+      d) insert the same val into each matched genes, step (3)
+
+
+  

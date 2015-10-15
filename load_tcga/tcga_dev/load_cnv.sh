@@ -15,6 +15,9 @@ echo $DATE_SHORT
 cwd=`pwd`
 path_downloaded=${cwd}/tcga_download
 
+rm -rf ${path_downloaded}
+
+
 mkdir -p ${path_downloaded}
 
 #### wget http://gdac.broadinstitute.org/runs/stddata__2015_06_01/data/BRCA/20150601/gdac.broadinstitute.org_BRCA.Merge_snp__genome_wide_snp_6__broad_mit_edu__Level_3__segmented_scna_minus_germline_cnv_hg19__seg.Level_3.2015060100.0.0.tar.gz
@@ -29,6 +32,15 @@ exit 1
 }
 
 tar -zxvf ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_snp__genome_wide_snp_6__broad_mit_edu__Level_3__segmented_scna_minus_germline_cnv_hg19__seg.Level_3.${DATE_SHORT}00.0.0.tar.gz --directory ${path_downloaded}/
+
+echo "downloading data completed. Continue? "
+select yn in "yes" "no"; do
+    case $yn in 
+        yes) break;;
+        no ) exit 1;;
+    esac
+done
+
 
 
   ##  create intermediate tsv files for easy loading  ##
