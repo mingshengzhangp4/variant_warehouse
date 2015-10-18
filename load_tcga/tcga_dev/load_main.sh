@@ -2,9 +2,9 @@
 
  
 if [ $# -ne 3 ]; then
-    echo "need two  arguments:"
-    echo "1.  script path,  such as:  /home/mzhang/Paradigm4_labs/variant_warehouse/load_tcga/tcga_dev"
-    echo "2.  geneFile, such as: /home/mzhang/Paradigm4_labs/variant_warehouse/load_gene_37/tcga_python_pipe/newGene.tsv"
+    echo "need three  arguments:"
+    echo "1.  script path,  such as:  /home/scidb/variant_warehouse/load_tcga/tcga_dev"
+    echo "2.  geneFile, such as: /home/scidb/variant_warehouse/load_gene_37/tcga_python_pipe/newGene.tsv"
     echo "3. Date, such as: 2015_06_01"
     exit 1
 fi
@@ -26,12 +26,20 @@ bash  $1/tcga_array_initialization.sh $1
 # load gene list 
 bash $1/load_gene.sh ${DATE} $2
 
-echo "start cnv data loading @ `date`"
-for tumor_type in `cat tumor_type.tsv`; do
-  bash $1/load_cnv.sh $3 $tumor_type $1 $2
-done
-echo "finished loading cnv data @ `date`"
 
+# many files are too big to be parsed by python, to-do list #
+
+#  echo "start cnv data loading @ `date`"
+#  for tumor_type in `cat tumor_type.tsv`; do
+#    bash $1/load_cnv.sh $3 $tumor_type $1 $2
+#  done
+#  echo "finished loading cnv data @ `date`"
+
+
+bash $1/load_cnv.sh $3 ACC $1 $2
+bash $1/load_cnv.sh $3 CHOL $1 $2
+bash $1/load_cnv.sh $3 DLBC $1 $2
+# bash $1/load_cnv.sh $3 UCS $1 $2
 
 echo "start clinical data loading @ `date`"
 for tumor_type in `cat tumor_type.tsv`; do

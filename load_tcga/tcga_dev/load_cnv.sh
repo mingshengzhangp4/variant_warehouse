@@ -215,6 +215,7 @@ store(
     'chunk_size=${chunk_size}', 'num_attributes=5'),
   TCGA_PROBE_DATA_LOAD_BUF)"
 
+
 iquery -anq "
 insert(
   redimension(
@@ -271,7 +272,7 @@ insert(
                   redimension(
                     TCGA_${DATE}_GENOME_WIDE_SNP_6_PROBE_STD,
                     <probe_name:string null>
-                    [probe_index=0:*, 1000,0]
+                    [probe_index=0:*, 1000000,0]
                     ),
                   probID,
                   probe_index
@@ -281,7 +282,7 @@ insert(
             ),
             probe_id, iif(mprobID is null, new_probes.i, mprobID+1+new_probes.i)
             ),
-          <probe_name: string>[probe_id=0:*,1000,0]
+          <probe_name: string>[probe_id=0:*,1000000,0]
           ) as new_probe_index,
       
          TCGA_PROBE_DATA_LOAD_BUF.probe_name,
@@ -299,6 +300,7 @@ insert(
   TCGA_${DATE}_GENOME_WIDE_SNP_6_PROBE_STD
   )"
 
+
 iquery -anq "
 insert(
   redimension(
@@ -313,7 +315,7 @@ insert(
                   redimension(
                     TCGA_${DATE}_GENOME_WIDE_SNP_6_PROBE_STD,
                     <probe_name:string null>
-                    [genome_wide_snp_6_probe_id=0:*,1000,0]
+                    [genome_wide_snp_6_probe_id=0:*,1000000,0]
                     ),
                   build(<subval:string>[i=0:0,1,0],'_'),
                   probe_name
@@ -347,5 +349,6 @@ insert(
 
 iquery -anq "remove(TCGA_PROBE_DATA_LOAD_BUF)"    > /dev/null 2>&1
 rm -rf  ${path_downloaded}
-rm ${probe_data_file}
-rm ${sampleBarCodeFile}
+rm -f ${probe_data_file}
+rm -f ${sampleBarCodeFile}
+
