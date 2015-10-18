@@ -1,18 +1,23 @@
 #!/bin/bash
 
-if [ $# -ne 2 ]; then
- echo "Need 2 arguments: date, tumor"
+if [ $# -ne 4 ]; then
+ echo "Need 4 arguments:"
+ echo "1. DATE, such as 2015_06_01"
+ echo "2. TUMOR, such as ACC"
+ echo "3. script_path, such as /home/mzhang/Paradigm4_labs/variant_warehouse/load_tcga/tcga_dev"
+ echo "4. Gene_file, such as /home/mzhang/Paradigm4_labs/variant_warehouse/load_gene_37/newGenes.tsv"
  exit 1
 fi
 
 DATE=$1
 TUMOR=$2
+cwd=$3
+gene_file=$4
 
 DATE_SHORT=`echo $DATE | sed  "s/_//g"`
 echo $DATE_SHORT
 
 
-cwd=`pwd`
 path_downloaded=${cwd}/tcga_download
 
 rm -rf ${path_downloaded}
@@ -33,27 +38,21 @@ exit 1
 
 tar -zxvf ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_snp__genome_wide_snp_6__broad_mit_edu__Level_3__segmented_scna_minus_germline_cnv_hg19__seg.Level_3.${DATE_SHORT}00.0.0.tar.gz --directory ${path_downloaded}/
 
-echo "downloading data completed. Continue? "
-select yn in "yes" "no"; do
-    case $yn in 
-        yes) break;;
-        no ) exit 1;;
-    esac
-done
-
-
 
   ##  create intermediate tsv files for easy loading  ##
 
 input_path=${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_snp__genome_wide_snp_6__broad_mit_edu__Level_3__segmented_scna_minus_germline_cnv_hg19__seg.Level_3.${DATE_SHORT}00.0.0
-methyl_file=${TUMOR}.methylation__humanmethylation450__jhu_usc_edu__Level_3__within_bioassay_data_set_function__data.data.txt
-input_file=${input_path}/${methyl_file}
-python methylation_file_parser.py ${input_file}
+
+cnv_file=${TUMOR}.snp__genome_wide_snp_6__broad_mit_edu__Level_3__segmented_scna_minus_germline_cnv_hg19__seg.seg.txt
+input_file=${input_path}/${cnv_file}
+
+python cnv_file_parser.py ${input_file} ${gene_file} ${cwd}
+
 
 
 ## update patient array ##
  
-sampleBarCodeFile=${cwd}/methyl_sample_barcodes.txt
+sampleBarCodeFile=${cwd}/cnv_sample_barcodes.txt
 iquery -anq "
 insert(
   redimension(
@@ -184,83 +183,26 @@ insert(
   TCGA_${DATE}_SAMPLE_STD
   )"
     
+## build the probe array first (the probe index is needed to construct cnv data array) ##
 
-## update gene array ##
-geneFile=${cwd}/methyl_genes.txt
-iquery -anq "
-insert(
-  redimension(
-    apply(
-      cross_join(
-        substitute(
-          uniq(
-            sort(
-              project(
-                filter(
-                  index_lookup(
-                    input(
-                    <gene_:string>[gene_id=0:*,1000000,0], 
-                    '${geneFile}',0,'tsv'
-                    ) as A,
+probe_data_file=${cwd}/cnv_data.txt
 
-                    uniq(sort(
-                      redimension(
-                        substitute(
-                          TCGA_${DATE}_GENE_STD,
-                          build(<subval:string>[i=0:0,1,0],'_'),
-                          gene_symbol
-                          ),
-                        <gene_symbol:string> [gene_id=0:*,1000000,0]
-                        )
-                      )) as B,
-                    gene_, 
-                    gid
-                    ),
-                  gid is null
-                  ),
-                gene_
-                )
-              )
-            ),
-          build(<subval:string>[i=0:0,1,0], '_'),
-          gene_ 
-          ) as new_genes,
-
-        aggregate( apply(TCGA_${DATE}_GENE_STD, gid, gene_id), max(gid) as mgid)
-      ),
-      gene_symbol, gene_,
-      gene_id, iif(mgid is null, new_genes.i, mgid+1+new_genes.i),
-      entrez_geneID, int64(0),
-      start_, '_',
-      end_, '_',
-      strand_, '_',
-      hgnc_synonym, '_',
-      synonym, '_',
-      dbXrefs, '_',
-      cyto_band, '_',
-      full_name, '_',
-      type_of_gene, '_',
-      chrom, '_',
-      other_locations, '_'
-      ),
-    TCGA_${DATE}_GENE_STD
-    ),
-  TCGA_${DATE}_GENE_STD
-  )"
+##  sample_barcode	probe_name	Mean_value	reference_gene_symbol	chromosome
+##  TCGA-PK-A5HC-11A-11D-A309-01	LOC100506869	0.0018	LOC100506869	12
+##  TCGA-PK-A5HC-11A-11D-A309-01	MTVR2	0.0009	MTVR2	17
+##  TCGA-PK-A5HC-11A-11D-A309-01	LOC100506860	0.0046	LOC100506860	7
+##  TCGA-PK-A5HC-11A-11D-A309-01	ATRX	0.0023	ATRX	23
+##  TCGA-PK-A5HC-11A-11D-A309-01	LOC643634	0.0024	LOC643634	3
 
 
-## build the probe array first (the probe index is needed for the construct methyl data array) ##
-
-probe_file=${cwd}/methyl_probe_data.txt
-iquery -anq "remove(TCGA_PROBE_LOAD_BUF)"    > /dev/null 2>&1
+iquery -anq "remove(TCGA_PROBE_DATA_LOAD_BUF)"    > /dev/null 2>&1
 chunk_size=1000
-iquery -anq "create temp array TCGA_PROBE_LOAD_BUF
-<probe_name:string null,
- gene_symbol:string null,
- reference_chromosome:string null,
- genomic_start_:string null,
- genomic_end_:string null,
- reference_gene_symbols:string null,
+iquery -anq "create temp array TCGA_PROBE_DATA_LOAD_BUF
+<sample_barcode: string null,
+ probe_name:string null,
+ Mean_value:string null,
+ reference_gene_symbol:string null,
+ chromosome:string null,
  error: string null>
 [source_instance_id = 0:*,1,0,
  chunk_number       = 0:*,1,0,
@@ -269,174 +211,141 @@ iquery -anq "create temp array TCGA_PROBE_LOAD_BUF
 iquery -anq "
 store(
   parse(
-    split('${probe_file}', 'lines_per_chunk=${chunk_size}'),
-    'chunk_size=${chunk_size}', 'num_attributes=6'),
-  TCGA_PROBE_LOAD_BUF)"
-
-## iquery -anq "remove(TCGA_${DATE}_HUMANMETHYLATION450_PROBE_STD)"
-## iquery -anq "create array
-## TCGA_${DATE}_HUMANMETHYLATION450_PROBE_STD
-## <probe_name:string null,
-## reference_chromosome:string null,
-## genomic_start:int64 null,
-## genomic_end:int64 null,
-## reference_gene_symbols:string null>
-## [gene_id=0:*,1000000,0,
-## humanmethylation450_probe_id=0:*,1000,0]"
-
+    split('${probe_data_file}','header=1',  'lines_per_chunk=${chunk_size}'),
+    'chunk_size=${chunk_size}', 'num_attributes=5'),
+  TCGA_PROBE_DATA_LOAD_BUF)"
 
 iquery -anq "
-store(
+insert(
   redimension(
     apply(
       index_lookup(
+      
         index_lookup(
-          TCGA_PROBE_LOAD_BUF,
+          TCGA_PROBE_DATA_LOAD_BUF,
           substitute(
-            redimension(
-              TCGA_${DATE}_GENE_STD,
-              <gene_symbol:string null>
-              [gene_id=0:*, 1000000,0]
+            redimension(TCGA_${DATE}_GENE_STD,
+              <gene_symbol: string null>
+              [gene_id = 0:*, 1000000,0]
               ),
-            build(<subval:string>[i=0:0,1,0],'_'),
+            build(<subval:string>[i=0:0,1,0], '_'),
             gene_symbol
             ),
-          TCGA_PROBE_LOAD_BUF.gene_symbol,
-          gene_index) as A,
-        substitute(
-          uniq(sort(
-            project(TCGA_PROBE_LOAD_BUF,
-            probe_name
-              )
-            )),
-          build(<subval:string>[i=0:0,1,0], '_')
+            reference_gene_symbol,
+            gene_id
           ),
-        A.probe_name,
-        probe_index
+      
+        redimension(
+          apply(
+            cross_join(
+              uniq(sort(
+                project(
+                  filter(  -- get unmathed/new probe_name
+                    index_lookup(  -- probe_name lookup
+                      TCGA_PROBE_DATA_LOAD_BUF as L,
+                      substitute(
+                        redimension(
+                          -- find index for probe_id
+                          apply(
+                          TCGA_${DATE}_GENOME_WIDE_SNP_6_PROBE_STD,
+                          probe_index,
+                          genome_wide_snp_6_probe_id
+                          ),
+                          <probe_name:string null>
+                          [probe_index=0:*, 1000,0]
+                          ),
+                        build(<subval:string>[i=0:0,1,0], '_'),
+                        probe_name
+                        ),
+                      L.probe_name,
+                      probeID
+                      ),  -- probe_name look_up
+                    probeID is null
+                    ),
+                  probe_name
+                  )
+                )) as new_probes,
+              
+              aggregate(
+                apply(
+                  redimension(
+                    TCGA_${DATE}_GENOME_WIDE_SNP_6_PROBE_STD,
+                    <probe_name:string null>
+                    [probe_index=0:*, 1000,0]
+                    ),
+                  probID,
+                  probe_index
+                  ),
+                max(probID) as mprobID
+                )
+            ),
+            probe_id, iif(mprobID is null, new_probes.i, mprobID+1+new_probes.i)
+            ),
+          <probe_name: string>[probe_id=0:*,1000,0]
+          ) as new_probe_index,
+      
+         TCGA_PROBE_DATA_LOAD_BUF.probe_name,
+         probe_index
+         ),
+    
+      reference_chromosome, chromosome,
+      genomic_start, 0,
+      genomic_end, 0,
+      reference_gene_symbols, reference_gene_symbol,
+      genome_wide_snp_6_probe_id, probe_index 
       ),
-      gene_id, gene_index,
-      humanmethylation450_probe_id, probe_index,
-      genomic_start, dcast(genomic_start_, int64(null)),
-      genomic_end, dcast(genomic_end_, int64(null))
-      ),
-    TCGA_${DATE}_HUMANMETHYLATION450_PROBE_STD
+    TCGA_${DATE}_GENOME_WIDE_SNP_6_PROBE_STD
     ),
-TCGA_${DATE}_HUMANMETHYLATION450_PROBE_STD
-)"
-
-
-## finally, build methylation data array proper ##
-methyl_dataFile=${cwd}/methyl_data.txt
-column_no=`cat ${methyl_dataFile}|awk -F'\t' '{print NF}' |head -n 1|awk '{print $1}'`
-iquery -anq "remove(TCGA_METHYLATION_LOAD_BUF)"    > /dev/null 2>&1
-  
-iquery -anq "create temp array TCGA_METHYLATION_LOAD_BUF
-<val:string null>
-[source_instance_id = 0:*,1,0,
- chunk_number       = 0:*,1,0,
- line_number        = 0:*,1000,0,
- col_number         = 0:$((column_no)), $((column_no+1)), 0]"
-
-# col_number = column_no + 1(for 'error' column)
-
+  TCGA_${DATE}_GENOME_WIDE_SNP_6_PROBE_STD
+  )"
 
 iquery -anq "
-store(
- parse(
-  split('${methyl_dataFile}', 'header=0', 'lines_per_chunk=1000'),
-  'chunk_size=1000', 'split_on_dimension=1', 'num_attributes=$((column_no))'
- ),
- TCGA_METHYLATION_LOAD_BUF
-)" 
-
-
-## iquery -anq "remove(TCGA_${DATE}_HUMANMETHYLATION450_STD)"
-## 
-## iquery -anq "create array
-##  TCGA_${DATE}_HUMANMETHYLATION450_STD
-##  <value:double null>
-##  [tumor_type_id=0:*,1,0,
-##   sample_id=0:*,1000,0,
-##   humanmethylation450_probe_id=0:*,1000, 0]"
-
-iquery -anq "
-insert(cast(
-  project(
+insert(
+  redimension(
     apply(
-      redimension(
-        project(
+      index_lookup(
+        apply(
           index_lookup(
             apply(
               index_lookup(
-                apply(
-                  index_lookup(                         
-                    cross_join(
-                      between(
-                        TCGA_METHYLATION_LOAD_BUF, 
-                        null, null, null, 0, null, null, null,0
-                        ) as probes,
-                      cross_join(
-                        between(
-                         TCGA_METHYLATION_LOAD_BUF, 
-                         null, null, null, 1, null, null, null,$((column_no-1))
-                         ) as samples,
-                        input(
-                          <sample_barcode:string> [sampleID=0:*,1000,0],
-                          '${sampleBarCodeFile}', 0, 'tsv'
-                          ) as S,
-                        samples.col_number, S.sampleID
-                        ),
-                      probes.source_instance_id, samples.source_instance_id,  
-                      probes.chunk_number, samples.chunk_number,
-                      probes.line_number, samples.line_number
-                      ),
-                    redimension(
-                      substitute( 
-                        apply(
-                          project(
-                            TCGA_${DATE}_HUMANMETHYLATION450_PROBE_STD,
-                            probe_name
-                            ),
-                          probe_id, humanmethylation450_probe_id
-                          ),
-                        build(<subval:string>[i=0:0,1,0],'_'),
-                        probe_name),
-                      <probe_name:string>
-                      [humanmethylation450_probe_id=0:*,1000,0]
-                      ) as P,
-                    probes.val, humanmethylation450_probe_id
+                TCGA_PROBE_DATA_LOAD_BUF,
+                substitute(
+                  redimension(
+                    TCGA_${DATE}_GENOME_WIDE_SNP_6_PROBE_STD,
+                    <probe_name:string null>
+                    [genome_wide_snp_6_probe_id=0:*,1000,0]
                     ),
-                  sample_name, substr(S.sample_barcode, 0,16)
-                  ) as M,
-                redimension(
-                  TCGA_${DATE}_SAMPLE_STD,
-                  <sample_name:string>[sample_id = 0:*,1000,0]
+                  build(<subval:string>[i=0:0,1,0],'_'),
+                  probe_name
                   ),
-                M.sample_name, sample_id
+                TCGA_PROBE_DATA_LOAD_BUF.probe_name,
+                genome_wide_snp_6_probe_id
                 ),
-              tumor_type, '${TUMOR}'
+              sample_name,
+              substr(sample_barcode, 0, 16)
+              ) as A,
+            redimension(
+              TCGA_${DATE}_SAMPLE_STD,
+              <sample_name:string>[sample_id = 0:*,1000,0]
               ),
-            TCGA_${DATE}_TUMOR_TYPE_STD,
-            tumor_type,
-            tumor_type_id
+            A.sample_name,
+            sample_id
             ),
-          samples.val, sample_id,humanmethylation450_probe_id
+          ttn, '${TUMOR}'
           ),
-        <val: string null>
-        [tumor_type_id = 0:*,1,0,
-         sample_id = 0:*,1000,0,
-         humanmethylation450_probe_id=0:*,1000,0]
+        TCGA_${DATE}_TUMOR_TYPE_STD,
+        ttn,
+        tumor_type_id
         ),
-      val_NAreplaced, dcast(val, double(null))
+      value, dcast(Mean_value, double(null))
       ),
-    val_NAreplaced
+    TCGA_${DATE}_GENOME_WIDE_SNP_6_STD
     ),
-  TCGA_${DATE}_HUMANMETHYLATION450_STD),TCGA_${DATE}_HUMANMETHYLATION450_STD)
-"
+  TCGA_${DATE}_GENOME_WIDE_SNP_6_STD
+  )"   
 
-iquery -anq "remove(TCGA_METHYLATION_LOAD_BUF)"    > /dev/null 2>&1
+
+iquery -anq "remove(TCGA_PROBE_DATA_LOAD_BUF)"    > /dev/null 2>&1
 rm -rf  ${path_downloaded}
-rm ${methyl_dataFile}
-rm ${probe_file}
-rm ${geneFile}
+rm ${probe_data_file}
 rm ${sampleBarCodeFile}

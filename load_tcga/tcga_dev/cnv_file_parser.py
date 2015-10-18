@@ -147,34 +147,37 @@ def right_gene_finder(sorted_gene_list, start_pos, right_target):
                 working_window = (middle, right_)
  
 
-def cnv_data_parser(input_file, gene_file, base_path):
+def cnv_data_parser(input_file, gene_file, work_dir):
     '''
       parse cnv data file, and write out a tsv file for scidb loading
 
       @para input_file: tcga CNV file, with fields-
           Sample	Chromosome(1-23)	Start	End	Num_Probes	Segment_Mean
-      @para gene_file: gene list file, with required fields-
+      @para gene_file: gene list file, such as:
+          /home/mzhang/Paradigm4/variant_warehouse/load_gene_37/newGenes.txt, with required fields-
           gene_symbol, chrom, start_, end_
+      @para work_dir: current working directory, such as
+          /home/mzhang/Paradigm4_labs/variant_warehouse/load_tcga/tcga_dev
       @return null: write out the tsv file with fields-
-                     sample_barcode       probe_name     Mean_value  reference_gene_symbol
-          TCGA-OR-A5J1-10A-01D-A29K-01     'ACAA1'       -0.226          'ACAA'
-          TCGA-OR-A5J1-10A-01D-A29K-01   'ACACA_MAX'     0.5517          'ACACA'
-          TCGA-OR-A5J1-10A-01D-A29K-01   'ACACA_MIN'     0.1796          'ACACA'
-          TCGA-OR-A5J1-10A-01D-A29K-01   '"RNVU1-1"'     0.5675          'RNVU1-1'
+                     sample_barcode       probe_name     Mean_value  reference_gene_symbol chromosome
+          TCGA-OR-A5J1-10A-01D-A29K-01     'ACAA1'       -0.226          'ACAA'              17
+          TCGA-OR-A5J1-10A-01D-A29K-01   'ACACA_MAX'     0.5517          'ACACA'             16
+          TCGA-OR-A5J1-10A-01D-A29K-01   'ACACA_MIN'     0.1796          'ACACA'             16
+          TCGA-OR-A5J1-10A-01D-A29K-01   '"RNVU1-1"'     0.5675          'RNVU1-1'            2
       '''
 
 
     list_sorted_geneList = gene_sorter(gene_file, (0, -2, 2, 3))
     fin = open(input_file, 'r')
-    fout = open(base_path + '/load_tcga/tcga_dev/cnv_data.txt', 'w')
-    headerLine = 'sample_barcode\tprobe_name\tMean_value\treference_gene_symbol\n'
+    fout = open(work_dir + '/cnv_data.txt', 'w')
+    headerLine = 'sample_barcode\tprobe_name\tMean_value\treference_gene_symbol\tchromosome\n'
     fout.write(headerLine)
     fin.next()
 
     sample_gene_vals = {}
      # {
-     #  sample1: {gene1:[val1, val2...], gene2:[val1, val2, ...], ..., }
-     #  sample2: {gene1:[val1, val2...], gene2:[val1, val2, ...], ..., }
+     #  sample1: {gene1:[chrom, val1, val2...], gene2:[chrom, val1, val2, ...], ..., }
+     #  sample2: {gene1:[chrom, val1, val2...], gene2:[chrom, val1, val2, ...], ..., }
      #      ........
      # }  
     for aline in fin:
@@ -202,35 +205,40 @@ def cnv_data_parser(input_file, gene_file, base_path):
         for i in mapped_gene_index:
             gene_symbol = chrom_geneList[i][0]
             if not gene_symbol in sample_gene_vals[sample_barcode]:
-                sample_gene_vals[sample_barcode][gene_symbol] = [mean_val]
+                sample_gene_vals[sample_barcode][gene_symbol] = [chrom, mean_val]
             else:
                 sample_gene_vals[sample_barcode][gene_symbol].append(mean_val)
     for sample in sample_gene_vals:
         for gene in sample_gene_vals[sample]:
-            if len(sample_gene_vals[sample][gene]) == 1:
+            if len(sample_gene_vals[sample][gene]) == 2:
                 probe_name = gene
-                Mean_value = sample_gene_vals[sample][gene][0]
+                Mean_value = sample_gene_vals[sample][gene][1]
                 newLine = sample + '\t' + probe_name + '\t' + str(Mean_value) + \
-                          '\t' + gene + '\n'
+                          '\t' + gene + '\t' + \
+                          str(sample_gene_vals[sample][gene][0]) + '\n' 
                 fout.write(newLine)
             else: # multiple vals
-                max_value = max(sample_gene_vals[sample][gene])
-                min_value = min(sample_gene_vals[sample][gene])
+                max_value = max(sample_gene_vals[sample][gene][1:])
+                min_value = min(sample_gene_vals[sample][gene][1:])
                 max_line = sample + '\t' + gene + '_MAX' + '\t' +\
-                           str(max_value) + '\t' + gene + '\n'
+                           str(max_value) + '\t' + gene + '\t' +\
+                           str(sample_gene_vals[sample][gene][0]) + '\n'
                 min_line = sample + '\t' + gene + '_MIN' + '\t' +\
-                           str(min_value) + '\t' + gene + '\n'
+                           str(min_value) + '\t' + gene + '\t' +\
+                           str(sample_gene_vals[sample][gene][0]) + '\n'
                 fout.write(max_line + min_line)
 
     fin.close()
 
 if __name__=='__main__':
 
-    git_repo_base_path = '/home/mzhang/Paradigm4_labs/variant_warehouse'
+    ## git_repo_base_path = '/home/mzhang/Paradigm4_labs/variant_warehouse'
     ## input_path = git_repo_base_path + '/' + 'load_tcga/tcga_dev/tcga_download/gdac.broadinstitute.org_ACC.Merge_snp__genome_wide_snp_6__broad_mit_edu__Level_3__segmented_scna_minus_germline_cnv_hg19__seg.Level_3.2015060100.0.0'
     ## cnv_file = 'ACC.snp__genome_wide_snp_6__broad_mit_edu__Level_3__segmented_scna_minus_germline_cnv_hg19__seg.seg.txt'
     ## input_file = input_path + '/' + cnv_file
-    gene_file = git_repo_base_path + '/' + 'load_gene_37' + '/' + 'newGene.tsv'
+    ## gene_file = git_repo_base_path + '/' + 'load_gene_37' + '/' + 'newGene.tsv'
     input_file = sys.argv[1]
+    gene_file = sys.argv[2]
+    work_dir = sys.argv[3]
     cnv_sample_parser(input_file)
-    cnv_data_parser(input_file, gene_file, git_repo_base_path)
+    cnv_data_parser(input_file, gene_file, work_dir)

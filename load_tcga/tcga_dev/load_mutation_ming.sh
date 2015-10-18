@@ -1,21 +1,27 @@
 #!/bin/bash
 
-if [ $# -ne 4 ]; then
- echo "Need 4 arguments: date, tumor, C_pos,P_pos"
+if [ $# -ne 5 ]; then
+ echo "Need 5 arguments:"
+ echo "1. Script_path, such as /home/mzhang/Paradigm4_labs/variant_house/load_tcga/tcga_dev"
+ echo "2. Date, such as 2015_06_01"
+ echo "3. Tumor, such as ACC"
+ echo "4. cDNA position field, such as 49"
+ echo "5. Protein position field, such as 50"
  exit 1
 fi
-
 DATE=$1
-TUMOR=$2
-C_pos=$3
-P_pos=$4
+cwd=$2
+TUMOR=$3
+C_pos=$4
+P_pos=$5
 
 
 DATE_SHORT=`echo $DATE | sed  "s/_//g"`
 echo $DATE_SHORT
-cwd=`pwd`
 path_downloaded=${cwd}/tcga_download
+rm -rf ${path_downloaded}
 mkdir -p ${path_downloaded}
+
 
 
 ##  gdac.broadinstitute.org_UVM.Mutation_Packager_Calls.Level_3.2015060100.0.0.tar.gz

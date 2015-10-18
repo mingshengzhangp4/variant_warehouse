@@ -1,18 +1,21 @@
 #!/bin/bash
 
-if [ $# -ne 2 ]; then
- echo "Need 2 arguments: date, tumor"
+if [ $# -ne 3 ]; then
+ echo "Need 3 arguments:"
+ echo "1. Date, such as 2015_06_01"
+ echo "2. Tumor, such as ACC"
+ echo "3. Script_path, such as /home/mzhang/Paradigm4_labs/variant_warehouse/load_tcga/tcga_dev"
  exit 1
 fi
 
 DATE=$1
 TUMOR=$2
+cwd=$3
 
 DATE_SHORT=`echo $DATE | sed  "s/_//g"`
 echo $DATE_SHORT
 
 
-cwd=`pwd`
 path_downloaded=${cwd}/tcga_download
 
 rm -rf ${path_downloaded}
