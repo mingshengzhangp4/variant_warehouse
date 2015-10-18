@@ -26,30 +26,30 @@ bash  $1/tcga_array_initialization.sh $1
 # load gene list 
 bash $1/load_gene.sh ${DATE} $2
 
-#   echo "start cnv data loading @ `date`"
-#   for tumor_type in `cat tumor_type.tsv`; do
-#     bash $1/load_cnv.sh $3 $tumor_type $1 $2
-#   done
-#   echo "finished loading cnv data @ `date`"
+echo "start cnv data loading @ `date`"
+for tumor_type in `cat tumor_type.tsv`; do
+  bash $1/load_cnv.sh $3 $tumor_type $1 $2
+done
+echo "finished loading cnv data @ `date`"
 
 
-#   echo "start clinical data loading @ `date`"
-#   for tumor_type in `cat tumor_type.tsv`; do
-#     bash $1/load_clinical_ming.sh $3 $tumor_type $1
-#   done
-#   echo "finished loading clinical data @ `date`"
+echo "start clinical data loading @ `date`"
+for tumor_type in `cat tumor_type.tsv`; do
+  bash $1/load_clinical_ming.sh $3 $tumor_type $1
+done
+echo "finished loading clinical data @ `date`"
 
 
-#   echo "start RNA seq loading @: `date`"
-#     for tumor_type in `cat tumor_type.tsv`; do
-#       bash $1/load_RNAseqV2.sh $3 $tumor_type $1
-#     done
-#   echo "finished RNA seq loading @: `date`"
+echo "start RNA seq loading @: `date`"
+  for tumor_type in `cat tumor_type.tsv`; do
+    bash $1/load_RNAseqV2.sh $3 $tumor_type $1
+  done
+echo "finished RNA seq loading @: `date`"
 
-#   echo "start methylation loading @: `date`"
-#     for tumor_type in `cat tumor_type.tsv`; do
-#       bash $1/load_methylation.sh $3 $tumor_type $1
-#     done
+echo "start methylation loading @: `date`"
+  for tumor_type in `cat tumor_type.tsv`; do
+    bash $1/load_methylation.sh $3 $tumor_type $1
+  done
 
 ##echo "start loading methylation data @ `date`"
 ## bash $1/load_methylation.sh $3 ACC 
