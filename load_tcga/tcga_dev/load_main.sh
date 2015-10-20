@@ -9,8 +9,6 @@ if [ $# -ne 3 ]; then
     exit 1
 fi
 
-
-
 current_wd=$1
 gene_file=$2
 DATE=$3
@@ -20,20 +18,19 @@ rm -f ${logfile}
 exec > >(tee ${logfile})
 exec 2>&1
 
-
 bash  $1/tcga_array_initialization.sh $1
+
 
 # load gene list 
 bash $1/load_gene.sh ${DATE} $2
 
 
-# many files are too big to be parsed by python, to-do list #
-
-#  echo "start cnv data loading @ `date`"
-#  for tumor_type in `cat tumor_type.tsv`; do
-#    bash $1/load_cnv.sh $3 $tumor_type $1 $2
-#  done
-#  echo "finished loading cnv data @ `date`"
+###   many files are too big to be parsed by python, to-do list #
+###    echo "start cnv data loading @ `date`"
+###    for tumor_type in `cat tumor_type.tsv`; do
+###      bash $1/load_cnv.sh $3 $tumor_type $1 $2
+###    done
+###    echo "finished loading cnv data @ `date`"
 
 
 bash $1/load_cnv.sh $3 ACC $1 $2
@@ -53,46 +50,6 @@ echo "start RNA seq loading @: `date`"
     bash $1/load_RNAseqV2.sh $3 $tumor_type $1
   done
 echo "finished RNA seq loading @: `date`"
-
-echo "start methylation loading @: `date`"
-  for tumor_type in `cat tumor_type.tsv`; do
-    bash $1/load_methylation.sh $3 $tumor_type $1
-  done
-
-##echo "start loading methylation data @ `date`"
-## bash $1/load_methylation.sh $3 ACC 
-## bash $1/load_methylation.sh $3 BLCA 
-## bash $1/load_methylation.sh $3 BRCA 
-## bash $1/load_methylation.sh $3 CESC 
-## bash $1/load_methylation.sh $3 CHOL
-## bash $1/load_methylation.sh $3 COAD
-## bash $1/load_methylation.sh $3 COADREAD
-## bash $1/load_methylation.sh $3 GBM 
-## bash $1/load_methylation.sh $3 GBMLGG 
-## bash $1/load_methylation.sh $3 HNSC 
-## bash $1/load_methylation.sh $3 KICH 
-## bash $1/load_methylation.sh $3 KIPAN
-## bash $1/load_methylation.sh $3 KIRC 
-## bash $1/load_methylation.sh $3 KIRP 
-## bash $1/load_methylation.sh $3 LAML 
-## bash $1/load_methylation.sh $3 LGG 
-## bash $1/load_methylation.sh $3 LIHC 
-## bash $1/load_methylation.sh $3 LUAD 
-## bash $1/load_methylation.sh $3 LUSC 
-## bash $1/load_methylation.sh $3 OV 
-## bash $1/load_methylation.sh $3 PAAD 
-## bash $1/load_methylation.sh $3 PCPG
-## bash $1/load_methylation.sh $3 PRAD 
-## bash $1/load_methylation.sh $3 READ 
-## bash $1/load_methylation.sh $3 SARC 
-## bash $1/load_methylation.sh $3 SKCM 
-## bash $1/load_methylation.sh $3 STAD 
-## bash $1/load_methylation.sh $3 THCA 
-## bash $1/load_methylation.sh $3 UCEC 
-## bash $1/load_methylation.sh $3 UCS 
-## bash $1/load_methylation.sh $3 UVM 
-## echo "finished loading methylation data @`date`"
-
 
 echo "start loading mutation data @ `date`"
 bash $1/load_mutation_ming.sh $3 $1 ACC 39 40
@@ -127,4 +84,46 @@ bash $1/load_mutation_ming.sh $3 $1 UCEC 100 38
 bash $1/load_mutation_ming.sh $3 $1 UCS 40 42
 bash $1/load_mutation_ming.sh $3 $1 UVM 40 42
 echo "finished loading mutation data @`date`"
+
+echo "start methylation loading @: `date`"
+  for tumor_type in `cat tumor_type.tsv`; do
+    bash $1/load_methylation.sh $3 $tumor_type $1
+  done
+echo "finished methylation loading @: `date`"
+
+
+## echo "start loading methylation data @ `date`"
+## bash $1/load_methylation.sh $3 ACC $1
+## bash $1/load_methylation.sh $3 BLCA $1
+## bash $1/load_methylation.sh $3 BRCA $1
+## bash $1/load_methylation.sh $3 CESC $1
+## bash $1/load_methylation.sh $3 CHOL $1
+## bash $1/load_methylation.sh $3 COAD $1
+## bash $1/load_methylation.sh $3 COADREAD $1
+## bash $1/load_methylation.sh $3 GBM $1
+## bash $1/load_methylation.sh $3 GBMLGG $1 
+## bash $1/load_methylation.sh $3 HNSC $1
+## bash $1/load_methylation.sh $3 KICH $1
+## bash $1/load_methylation.sh $3 KIPAN $1
+## bash $1/load_methylation.sh $3 KIRC $1
+## bash $1/load_methylation.sh $3 KIRP $1
+## bash $1/load_methylation.sh $3 LAML $1
+## bash $1/load_methylation.sh $3 LGG $1
+## bash $1/load_methylation.sh $3 LIHC $1
+## bash $1/load_methylation.sh $3 LUAD $1
+## bash $1/load_methylation.sh $3 LUSC $1
+## bash $1/load_methylation.sh $3 OV $1
+## bash $1/load_methylation.sh $3 PAAD $1
+## bash $1/load_methylation.sh $3 PCPG $1
+## bash $1/load_methylation.sh $3 PRAD $1
+## bash $1/load_methylation.sh $3 READ $1
+## bash $1/load_methylation.sh $3 SARC $1
+## bash $1/load_methylation.sh $3 SKCM $1
+## bash $1/load_methylation.sh $3 STAD $1
+## bash $1/load_methylation.sh $3 THCA $1 
+## bash $1/load_methylation.sh $3 UCEC $1
+## bash $1/load_methylation.sh $3 UCS $1
+## bash $1/load_methylation.sh $3 UVM $1
+## echo "finished loading methylation data @`date`"
+
 

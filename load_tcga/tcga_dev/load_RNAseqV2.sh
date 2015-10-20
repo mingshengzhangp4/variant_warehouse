@@ -144,9 +144,13 @@ insert(
                   project(               
                     filter(
                       index_lookup(
-                        input(
-                          <sample_name:string> [sampleID=0:*,1000,0],
-                          '${samplesFile}', 0, 'tsv'
+                        apply(
+                          input(
+                            <sample_barcode:string> [sampleID=0:*,1000,0],
+                            '${samplesFile}', 0, 'tsv'
+                            ),
+                          sample_name,
+                          substr(sample_barcode, 0,16)
                           ) as B,
   
                         redimension(
