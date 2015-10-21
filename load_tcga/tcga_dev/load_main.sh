@@ -21,8 +21,12 @@ exec 2>&1
 bash  $1/tcga_array_initialization.sh $1
 
 
+
+m_gene_file=$1/gene_symbol_as_id.tsv
+python gene_symbol_geneID_generator ${gene_file} ${m_gene_file}
+ 
 # load gene list 
-bash $1/load_gene.sh ${DATE} $2
+bash $1/load_gene.sh ${DATE} ${m_gene_file}
 
 
 ###   many files are too big to be parsed by python, to-do list #
@@ -47,7 +51,7 @@ echo "finished loading clinical data @ `date`"
 
 echo "start RNA seq loading @: `date`"
   for tumor_type in `cat tumor_type.tsv`; do
-    bash $1/load_RNAseqV2.sh $3 $tumor_type $1
+    bash $1/load_RNAseqV2_v2.sh ${DATE} $tumor_type ${current_wd} ${gene_file}
   done
 echo "finished RNA seq loading @: `date`"
 

@@ -429,6 +429,7 @@ insert(cast(
 "
 
 iquery -anq "remove(TCGA_METHYLATION_LOAD_BUF)"    > /dev/null 2>&1
+iquery -anq "remove(TCGA_PROBE_LOAD_BUF)"    > /dev/null 2>&1
 rm -rf ${path_downloaded}
 rm ${methyl_dataFile}
 rm ${probe_file}

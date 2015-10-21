@@ -16,12 +16,23 @@ GENE Array (base)
   https://github.com/Paradigm4/variant_warehouse/load_gene_37/
         tcga_python_pipe/create_gene_attributes.py
 
-** Data layout (newGene.tsv) **
+** Data layout (newGene.tsv):  hgnc_symbol-entrez_geneID may be many-one **
 
 hgnc_symbol	entrez_geneID	Start	End	Strand	hgnc_synonym	ncbi_synonym	dbXrefs	cyto_band	full_name	Type_of_gene	chromosome	other_locations
 
 A1BG	1	58858172	58864865	-	_	A1B|ABG|GAB|HYST2477	MIM:138670|HGNC:HGNC:5|Ensembl:ENSG00000121410|HPRD:00726|Vega:OTTHUMG00000183507	19q13.4	alpha-1-B glycoprotein	protein-coding	19	_
 A2M	2	9220304	9268558	-	FWP007, S863-7, CPAMD5	A2MD|CPAMD5|FWP007|S863-7	MIM:103950|HGNC:HGNC:7|Ensembl:ENSG00000175899|HPRD:00072|Vega:OTTHUMG00000150267	12p13.31	alpha-2-macroglobulin	protein-coding	12	_
+
+** generate gene list with gene_symbol as unique gene id **
+
+    --python script for generating this file --
+    https://github.com/Paradigm4/variant_warehouse/load_tcga/tcga_dev/gene_symbol_as_geneID.py
+   
+    --input file --
+    https://github.com/Paradigm4/variant_warehouse/load_gene_37/newGene.tsv
+
+    --output file: same format as input but hgnc_symbol-entrez_geneIDs is one-one (collapse entrezIDs) --
+    https://github.com/Paradigm4/variant_warehouse/load_tcga/tcga_dev/gene_symbol_as_id.tsv
 
 
 ** scidb gene array schema **
@@ -71,6 +82,24 @@ gene_id                 normalized_count                normalized_count        
 ?|100130426             0.0000                           0.0000                       ...
 ADAMTS14|140766         75.4803                          123.9804                     ...
 ...........
+
+** python code to parse the gene_id to unique gene_symbol **
+    -- script --
+      RNAseq_parser.py
+
+    --input file --   
+      BRCA.rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.data.txt
+
+    --output file --
+      RNAseq_data.tsv
+       
+      ** Content **
+      
+      Hybridization REF       TCGA-3C-AAAU-01A-11R-A41B-07    TCGA-3C-AALI-01A-11R-A41B-07  ...
+      gene_id                 normalized_count                normalized_count              ...
+      ABC                     0.0000                           0.0000                       ...
+      ADAMTS14                75.4803                          123.9804                     ...
+      ...........
 
 
 ** scidb array schema **
