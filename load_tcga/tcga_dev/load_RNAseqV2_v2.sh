@@ -274,7 +274,7 @@ store(
    
 
 ## loading RNAseq data in one step; for two steps, see what follows ##
-iquery -aq "
+iquery -anq "
 insert(
   redimension(
     index_lookup(
