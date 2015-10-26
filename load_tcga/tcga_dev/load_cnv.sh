@@ -46,14 +46,10 @@ input_path=${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_snp__genome
 cnv_file=${TUMOR}.snp__genome_wide_snp_6__broad_mit_edu__Level_3__segmented_scna_minus_germline_cnv_hg19__seg.seg.txt
 input_file=${input_path}/${cnv_file}
 
-
-
+# python parser takes cnv_file and creates ${cwd}/cnv_sample_barcodes.txt and ${cwd}/cnv_data.txt #
 python cnv_file_parser.py ${input_file} ${gene_file} ${cwd}
 
-
-
 ## update patient array ##
- 
 sampleBarCodeFile=${cwd}/cnv_sample_barcodes.txt
 iquery -anq "
 insert(

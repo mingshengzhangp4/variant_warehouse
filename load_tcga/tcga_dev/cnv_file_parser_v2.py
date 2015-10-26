@@ -4,6 +4,24 @@ import re, sys
 
 
 def cnv_sample_parser(input_file):
+    '''
+    parsing cnv data to create a list of sample_barcodes
+
+    @para input_file, cnv_file with the fields
+    
+         Sample            Chromosome	Start	   End	     Num_Probes	  Segment_Mean
+    TCGA-OR-A5J1-10A-01D-A29K-01	1	3218610	  247813706	128989	1e-04
+    TCGA-OR-A5J1-10A-01D-A29K-01	2	484222	   45753961	26796	0.0073
+    TCGA-OR-A5J1-10A-01D-A29K-01	2	45759027   45759054	2	-1.6119
+    TCGA-OR-A5J1-10A-01D-A29K-01	2	45764419   167211490	61083	0.0067
+        ... (21053 rows)
+    @ return writing out a tsv file 'cnv_sample_barcodes.txt' in pwd, with contents
+    TCGA-OR-A5J1-10A-01D-A29K-01
+    TCGA-OR-A5J1-10A-01D-A29K-01
+    TCGA-OR-A5J1-10A-01D-A29K-01
+    TCGA-OR-A5J1-10A-01D-A29K-01
+         .....
+    '''
     fin = open(input_file, 'r')
     fo_sample = open('cnv_sample_barcodes.txt', 'w')
 
@@ -34,7 +52,8 @@ def gene_sorter(gene_file, field_idx, header=1):
                 [(gene2.1, start_, end_), (gene2.2, start_, end_), ...],
                      ......
                 [(gene23.1, start_, end_), (gene23.2, start_, end_), ...], # X-chrom
-                [gene24.1, start_, end_), (gene24.2, start_, end_), ...]  # Y-chrom
+                [gene24.1, start_, end_), (gene24.2, start_, end_), ...],  # Y-chrom
+                [gene25.1, start_, end_), (gene25.2, start_, end_), ...]   # MT-chrom
               )
     '''
     fin = open(gene_file, 'r')
@@ -49,11 +68,12 @@ def gene_sorter(gene_file, field_idx, header=1):
 
     for aline in fin:
         alist = [item.strip() for item in re.split('\t', aline)]
-        if alist[field_idx[2]] in ['_', '0', '-'] or alist[field_idx[1]] in ['_', '0', '-']:
+        if alist[field_idx[2]].lower() in ['_', '0', '-', 'un'] or \
+           alist[field_idx[1]].lower() in ['_', '0', '-','un']:
             continue
         gene_symbol = alist[field_idx[0]]
         chrom_str = alist[field_idx[1]]
-        if chrom_str.lower() in ['x', 'x|y']:
+        if chrom_str.lower() in ['x', 'x|y','y|x']:
             chrom_str = '23'
         if chrom_str.lower() == 'y':
             chrom_str = '24'
@@ -126,15 +146,15 @@ def right_gene_finder(sorted_gene_list, start_pos, right_target):
     if start_pos is None:
         return None
  
-
     nGenes = len(sorted_gene_list)
     working_window = [start_pos, nGenes-1]
     while 1:
+
         left_bound_2left_coord = sorted_gene_list[working_window[0]+1][1]
         right_bound_left_coord = sorted_gene_list[working_window[1]][1]
         if right_target < left_bound_2left_coord:
             return working_window[0]
-        elif right_target >= right_bound_left_coord:  # bug fix: ">" -> ">="
+        elif right_target >= right_bound_left_coord: # bug fix, ">" -> ">="
             return working_window[1]
         else: ## move the window
             middle = int((working_window[0] + working_window[1])/2.0)
@@ -149,6 +169,8 @@ def right_gene_finder(sorted_gene_list, start_pos, right_target):
 
 def cnv_data_parser(input_file, gene_file, work_dir):
     '''
+      revision: write out result one chromosome at a time, to deal with CPU restriction
+
       parse cnv data file, and write out a tsv file for scidb loading
 
       @para input_file: tcga CNV file, with fields-
@@ -174,69 +196,73 @@ def cnv_data_parser(input_file, gene_file, work_dir):
     fout.write(headerLine)
     fin.next()
 
-    sample_gene_vals = {}
-     # {
-     #  sample1: {gene1:[chrom, val1, val2...], gene2:[chrom, val1, val2, ...], ..., }
-     #  sample2: {gene1:[chrom, val1, val2...], gene2:[chrom, val1, val2, ...], ..., }
-     #      ........
-     # }  
-    for aline in fin:
-        alist = [item.strip() for item in re.split('\t', aline)]
 
-        sample_barcode = alist[0]
-        if not sample_barcode in sample_gene_vals:
-            sample_gene_vals[sample_barcode] = {}
+    for chrom_index in range(1,26):
+        fin.seek(0)
+        fin.next()
+        sample_gene_vals = {}
+         # {
+         #  sample1: {gene1:[chrom, val1, val2...], gene2:[chrom, val1, val2, ...], ..., }
+         #  sample2: {gene1:[chrom, val1, val2...], gene2:[chrom, val1, val2, ...], ..., }
+         #      ........
+         # }
+        for aline in fin:
+            alist = [item.strip() for item in re.split('\t', aline)]
+            chrom = int(alist[1])
+            if not chrom_index == chrom:
+                continue 
+            sample_barcode = alist[0]
+            if not sample_barcode in sample_gene_vals:
+                sample_gene_vals[sample_barcode] = {}
 
-        mean_val = float(alist[-1])
-        chrom = int(alist[1])
-        seg_left = int(alist[2])
-        seg_right = int(alist[3])
-        
-        chrom_geneList = list_sorted_geneList[chrom-1]
-        left_gene_index = left_gene_finder(chrom_geneList, seg_left)
-        if left_gene_index is None:
-            print 'no genes on this segment'
-            continue
-        right_gene_index = right_gene_finder(chrom_geneList, left_gene_index, seg_right)
-        if right_gene_index is None:
-            print 'something wrong, better check'
-            continue
-        mapped_gene_index = range(left_gene_index, right_gene_index+1)
-        for i in mapped_gene_index:
-            gene_symbol = chrom_geneList[i][0]
-            if not gene_symbol in sample_gene_vals[sample_barcode]:
-                sample_gene_vals[sample_barcode][gene_symbol] = [chrom, mean_val]
-            else:
-                sample_gene_vals[sample_barcode][gene_symbol].append(mean_val)
-    for sample in sample_gene_vals:
-        for gene in sample_gene_vals[sample]:
-            if len(sample_gene_vals[sample][gene]) == 2:
-                probe_name = gene
-                Mean_value = sample_gene_vals[sample][gene][1]
-                newLine = sample + '\t' + probe_name + '\t' + str(Mean_value) + \
-                          '\t' + gene + '\t' + \
-                          str(sample_gene_vals[sample][gene][0]) + '\n' 
-                fout.write(newLine)
-            else: # multiple vals
-                max_value = max(sample_gene_vals[sample][gene][1:])
-                min_value = min(sample_gene_vals[sample][gene][1:])
-                max_line = sample + '\t' + gene + '_MAX' + '\t' +\
-                           str(max_value) + '\t' + gene + '\t' +\
-                           str(sample_gene_vals[sample][gene][0]) + '\n'
-                min_line = sample + '\t' + gene + '_MIN' + '\t' +\
-                           str(min_value) + '\t' + gene + '\t' +\
-                           str(sample_gene_vals[sample][gene][0]) + '\n'
-                fout.write(max_line + min_line)
+            mean_val = float(alist[-1])
+            seg_left = int(alist[2])
+            seg_right = int(alist[3])
+            
+            chrom_geneList = list_sorted_geneList[chrom-1]
+            
+            left_gene_index = left_gene_finder(chrom_geneList, seg_left)
+            if left_gene_index is None:
+                print 'no genes on this segment'
+                continue
+            right_gene_index = right_gene_finder(chrom_geneList, left_gene_index, seg_right)
+            if right_gene_index is None:
+                print 'something wrong, better check'
+                continue
+            mapped_gene_index = range(left_gene_index, right_gene_index+1)
+            for i in mapped_gene_index:
+                gene_symbol = chrom_geneList[i][0]
+                if not gene_symbol in sample_gene_vals[sample_barcode]:
+                    sample_gene_vals[sample_barcode][gene_symbol] = [chrom, mean_val]
+                else:
+                    sample_gene_vals[sample_barcode][gene_symbol].append(mean_val)
+        for sample in sample_gene_vals:
+            for gene in sample_gene_vals[sample]:
+                if len(sample_gene_vals[sample][gene]) == 2:
+                    probe_name = gene
+                    Mean_value = sample_gene_vals[sample][gene][1]
+                    newLine = sample + '\t' + probe_name + '\t' + str(Mean_value) + \
+                              '\t' + gene + '\t' + \
+                              str(sample_gene_vals[sample][gene][0]) + '\n' 
+                    fout.write(newLine)
+                else: # multiple vals
+                    max_value = max(sample_gene_vals[sample][gene][1:])
+                    min_value = min(sample_gene_vals[sample][gene][1:])
+                    max_line = sample + '\t' + gene + '_MAX' + '\t' +\
+                               str(max_value) + '\t' + gene + '\t' +\
+                               str(sample_gene_vals[sample][gene][0]) + '\n'
+                    min_line = sample + '\t' + gene + '_MIN' + '\t' +\
+                               str(min_value) + '\t' + gene + '\t' +\
+                               str(sample_gene_vals[sample][gene][0]) + '\n'
+                    fout.write(max_line + min_line)
 
     fin.close()
-
+    fout.close()
 if __name__=='__main__':
 
-    ## git_repo_base_path = '/home/mzhang/Paradigm4_labs/variant_warehouse'
-    ## input_path = git_repo_base_path + '/' + 'load_tcga/tcga_dev/tcga_download/gdac.broadinstitute.org_ACC.Merge_snp__genome_wide_snp_6__broad_mit_edu__Level_3__segmented_scna_minus_germline_cnv_hg19__seg.Level_3.2015060100.0.0'
-    ## cnv_file = 'ACC.snp__genome_wide_snp_6__broad_mit_edu__Level_3__segmented_scna_minus_germline_cnv_hg19__seg.seg.txt'
-    ## input_file = input_path + '/' + cnv_file
-    ## gene_file = git_repo_base_path + '/' + 'load_gene_37' + '/' + 'newGene.tsv'
+    ##  input_file ='/home/scidb/variant_warehouse/load_tcga/tcga_dev/tcga_download/gdac.broadinstitute.org_BLCA.Merge_snp__genome_wide_snp_6__broad_mit_edu__Level_3__segmented_scna_minus_germline_cnv_hg19__seg.Level_3.2015060100.0.0/BLCA.snp__genome_wide_snp_6__broad_mit_edu__Level_3__segmented_scna_minus_germline_cnv_hg19__seg.seg.txt'
+    ##  gene_file ='/home/scidb/variant_warehouse/load_gene_37/tcga_python_pipe/newGene.tsv'
+    ##  work_dir ='/home/scidb/variant_warehouse/load_tcga/tcga_dev'
     input_file = sys.argv[1]
     gene_file = sys.argv[2]
     work_dir = sys.argv[3]
