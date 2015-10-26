@@ -17,6 +17,9 @@ iquery -anq "remove(TCGA_${DATE}_CLINICAL_STD)"     > /dev/null 2>&1
 iquery -anq "remove(TCGA_${DATE}_GENE_STD)"         > /dev/null 2>&1
 iquery -anq "remove(TCGA_${DATE}_MUTATION_STD)"     > /dev/null 2>&1
 iquery -anq "remove(TCGA_${DATE}_RNAseqV2_STD)"     > /dev/null 2>&1
+iquery -anq "remove(TCGA_${DATE}_RNAseq_STD)"     > /dev/null 2>&1
+
+
 iquery -anq "remove(TCGA_${DATE}_HUMANMETHYLATION450_PROBE_STD)" > /dev/null 2>&1
 iquery -anq "remove(TCGA_${DATE}_HUMANMETHYLATION450_STD)" > /dev/null 2>&1
 iquery -anq "remove(TCGA_${DATE}_GENOME_WIDE_SNP_6_PROBE_STD)" > /dev/null 2>&1
@@ -72,6 +75,14 @@ iquery -anq "create array TCGA_${DATE}_RNAseqV2_STD
   sample_id=0:*,1000,0,
   gene_id=0:*,1000000,0]"
 
+iquery -anq "create array 
+ TCGA_${DATE}_RNAseq_STD
+ <raw_count:double null,
+  scaled_estimate:double null>
+ [tumor_type_id=0:*,1,0,
+  sample_id=0:*, 1000, 0,
+  gene_id=0:*,1000000,0]"
+ 
 iquery -anq "create array
 TCGA_${DATE}_HUMANMETHYLATION450_PROBE_STD
 <probe_name:string null,
