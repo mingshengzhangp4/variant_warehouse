@@ -56,68 +56,145 @@ RNAseqv2 array
 *********************************************************************
 *********************************************************************
 
-** data URL **
+== old versions, parsing normalized data ==
+    ** data URL **
+    
+    ## wget http://gdac.broadinstitute.org/runs/stddata__2015_06_01/data/BRCA/20150601/gdac.broadinstitute.org_BRCA.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.2015060100.0.0.tar.gz
+    
+    
+    ** platform + algorithm/method **
+    
+    Illumnia HiSeq
+    RSEM (V2)
+    
+    
+    ** on exon or gene level **
+    
+    gene 
+    
+    ** file structure in tar.gz **
+    illumina HiSeqMANIFEST.txt
+    BRCA.rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.data.txt
+    
+    ** Content **
+    
+    Hybridization REF       TCGA-3C-AAAU-01A-11R-A41B-07    TCGA-3C-AALI-01A-11R-A41B-07  ...
+    gene_id                 normalized_count                normalized_count              ...
+    ?|100130426             0.0000                           0.0000                       ...
+    ADAMTS14|140766         75.4803                          123.9804                     ...
+    ...........
+    
+    ** python code to parse the gene_id to unique gene_symbol **
+        -- script --
+          RNAseq_parser.py
+    
+        --input file --   
+          BRCA.rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.data.txt
+    
+        --output file --
+          RNAseq_data.tsv
+           
+          ** Content **
+          
+          Hybridization REF       TCGA-3C-AAAU-01A-11R-A41B-07    TCGA-3C-AALI-01A-11R-A41B-07  ...
+          gene_id                 normalized_count                normalized_count              ...
+          ABC                     0.0000                           0.0000                       ...
+          ADAMTS14                75.4803                          123.9804                     ...
+          ...........
+    
+    ** scidb array schema **
+    TCGA_${DATE}_RNAseqV2_STD
+    <RNA_expressionLevel:double null>
+    [tumor_type_id=0:*,1,0,
+     sample_id=0:*,1000,0,
+     gene_id=0:*,1000000,0]"
 
-## wget http://gdac.broadinstitute.org/runs/stddata__2015_06_01/data/BRCA/20150601/gdac.broadinstitute.org_BRCA.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.2015060100.0.0.tar.gz
+   
+        **  loading scripts **
+    
+    https://github.com/Paradigm4/variant_warehouse/load_tcga/tcga_dev/load_RNAseqV2.sh + load_RNAseqV2_v2.sh
+    
+    include-
+    update/insert: TCGA_{DATE}_PATIENT_STD
+    update/insert: TCGA_{DATE}_SAMPLE_STD
+    update/insert: TCGA_{GATE}_GENE_STD
 
+== new versions, parsing raw_count + scaled_estimate  ==
+    ** data URL **
+    
+    ## wget http://gdac.broadinstitute.org/runs/stddata__2015_06_01/data/BRCA/20150601/gdac.broadinstitute.org_BRCA.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes__data.Level_3.2015060100.0.0.tar.gz
+    
+    
+    ** platform + algorithm/method **
+    
+    Illumnia HiSeq
+    RSEM (V2)
+    
+    
+    ** on exon or gene level **
+    
+    gene 
+    
+    ** file structure in tar.gz **
+    illumina HiSeqMANIFEST.txt
+    BRCA.rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes__data.data.txt
+    
+    ** Content **
+    
+    Hybridization REF       TCGA-3C-AAAU-01A-11R-A41B-07    TCGA-3C-AALI-01A-11R-A41B-07  ...
 
-** platform + algorithm/method **
+    gene_id    raw_count       scaled_estimate         transcript_id      raw_count       scaled_estimate transcript_id
+   ?|100130426     0.00          0                        uc011lsn.1         0.00                0       uc011lsn.1 
+A2BP1|54715     36.00   2.52115894577257e-07    uc002cyr.1,uc002cys.2,..    14.00   1.03297569200245e-07 uc002cyr.1,uc002cys.2,.. 
+    ........
 
-Illumnia HiSeq
-RSEM (V2)
+    
+    ** python code to parse the gene_id to unique gene_symbol **
+        -- script --
+          RNAseq_parser_raw.py
+    
+        --input file --   
+          BRCA.rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes__data.data.txt
+    
+        --output file 1--
+          RNAseq_data_raw_count.tsv
+           
+          ** Content **
+          
+          Hybridization REF       TCGA-3C-AAAU-01A-11R-A41B-07    TCGA-3C-AALI-01A-11R-A41B-07  ...
+          gene_id                 raw_count                       raw_count                     ...
+          ABC                     0.0000                           0.0000                       ...
+          ADAMTS14                75.4803                          123.9804                     ...
+          ...........
+ 
+        --output file 2--
+          RNAseq_data_scaled_estimate.tsv
+           
+          ** Content **
+          
+          Hybridization REF       TCGA-3C-AAAU-01A-11R-A41B-07    TCGA-3C-AALI-01A-11R-A41B-07  ...
+          gene_id                 scaled_estimate                  scaled_estimate              ...
+          ABC                     0.0000                           0.0000                       ...
+          ADAMTS14                0.34                             0.804                        ...
+          ...........
 
-
-** on exon or gene level **
-
-gene 
-
-** file structure in tar.gz **
-illumina HiSeqMANIFEST.txt
-BRCA.rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.data.txt
-
-** Content **
-
-Hybridization REF       TCGA-3C-AAAU-01A-11R-A41B-07    TCGA-3C-AALI-01A-11R-A41B-07  ...
-gene_id                 normalized_count                normalized_count              ...
-?|100130426             0.0000                           0.0000                       ...
-ADAMTS14|140766         75.4803                          123.9804                     ...
-...........
-
-** python code to parse the gene_id to unique gene_symbol **
-    -- script --
-      RNAseq_parser.py
-
-    --input file --   
-      BRCA.rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.data.txt
-
-    --output file --
-      RNAseq_data.tsv
-       
-      ** Content **
-      
-      Hybridization REF       TCGA-3C-AAAU-01A-11R-A41B-07    TCGA-3C-AALI-01A-11R-A41B-07  ...
-      gene_id                 normalized_count                normalized_count              ...
-      ABC                     0.0000                           0.0000                       ...
-      ADAMTS14                75.4803                          123.9804                     ...
-      ...........
-
-
-** scidb array schema **
-
-TCGA_{DATE}_RNAseqV2_STD
-    <RNA_expressionLevel:string null>
-    [tumor_type_id:0:*,1,0,
-     sample_id=0:*, 1000000, 0,
-     gene_id=0:*,1000,0]
-
-**  loading scripts **
-
-https://github.com/Paradigm4/variant_warehouse/load_tcga/tcga_dev/load_RNAseqV2.sh
-
-include-
-update/insert: TCGA_{DATE}_PATIENT_STD
-update/insert: TCGA_{DATE}_SAMPLE_STD
-update/insert: TCGA_{GATE}_GENE_STD
+    ** scidb array schema **
+    
+        TCGA_{DATE}_RNAseq_STD
+        <raw_count:double null,
+         scaled_estimate:double null>
+        [tumor_type_id:0:*,1,0,
+         sample_id=0:*, 1000, 0,
+         gene_id=0:*,10000000,0]
+    
+    **  loading scripts **
+    
+    https://github.com/Paradigm4/variant_warehouse/load_tcga/tcga_dev/load_RNAseq_raw.sh
+    
+    include-
+    update/insert: TCGA_{DATE}_PATIENT_STD
+    update/insert: TCGA_{DATE}_SAMPLE_STD
+    update/insert: TCGA_{GATE}_GENE_STD
 
 ********************************************************************
 ********************************************************************
