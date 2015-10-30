@@ -37,7 +37,7 @@ tar -zxvf ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_protein_exp_
 
   ##  create intermediate tsv files for easy loading  ##
   
-proteinFile_original=${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_protein_exp__mda_rppa_core__mdanderson_org__Level_3__protein_normalization__data.Level_3.${DATE_SHORT}00.0.0/ACC.protein_exp__mda_rppa_core__mdanderson_org__Level_3__protein_normalization__data.data.txt
+proteinFile_original=${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Merge_protein_exp__mda_rppa_core__mdanderson_org__Level_3__protein_normalization__data.Level_3.${DATE_SHORT}00.0.0/${TUMOR}.protein_exp__mda_rppa_core__mdanderson_org__Level_3__protein_normalization__data.data.txt
   
 proteinFile=${proteinFile_original}
 protein_probeFile=${cwd}/protein_probe.tsv
@@ -264,25 +264,6 @@ store(
   TCGA_PROBE_LOAD_BUF)"
 
 
-## # iquery -anq "remove(TCGA_${DATE}_PROTEIN_EXP_PROBE_STD)" 
-## # 
-## # iquery -anq "create array
-## # TCGA_${DATE}_PROTEIN_EXP_PROBE_STD
-## # <probe_name:string null,
-## # reference_chromosome:string null,
-## # genomic_start:int64 null,
-## # genomic_end:int64 null,
-## # reference_gene_symbols:string null>
-## # [gene_id=0:*,1000000,0,
-## # protein_exp_probe_id=0:*,1000,0]"
-## # 
-## # iquery -anq "remove(protein_probe_index)"
-## # 
-## # iquery -anq "create array protein_probe_index
-## # <probe_name:string>
-## # [probe_id=0:*, 1000000,0]"
-
-
 
 # update protein_probe_index
 
@@ -403,14 +384,6 @@ store(
 )" 
 
 
-## # iquery -anq "remove(TCGA_${DATE}_PROTEIN_EXP_STD)"
-## # iquery -anq "create array
-## #  TCGA_${DATE}_PROTEIN_EXP_STD
-## #  <value:double null>
-## #  [tumor_type_id=0:*,1,0,
-## #   sample_id=0:*,1000,0,
-## #   protein_exp_probe_id=0:*,1000,0]"
-
   
 iquery -anq "
 insert(
@@ -460,11 +433,12 @@ insert(
   TCGA_${DATE}_PROTEIN_EXP_STD
   )
 "
+
+iquery -anq "remove(TCGA_PROBE_LOAD_BUF)"    > /dev/null 2>&1
 iquery -anq "remove(TCGA_protein_LOAD_BUF)"    > /dev/null 2>&1
 rm -rf  ${path_downloaded}
-# rm ${proteinFile}
 rm ${samplesFile}
 rm ${unsorted_sampleFile}
 rm ${protein_geneFile}
 
-
+rm ${protein_probeFile}v

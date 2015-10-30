@@ -267,24 +267,6 @@ store(
   TCGA_PROBE_LOAD_BUF)"
 
 
-## # iquery -anq "remove(TCGA_${DATE}_ILLUMINAHISEQ_MIRNASEQ_PROBE_STD)" 
-## # 
-## # iquery -anq "create array
-## # TCGA_${DATE}_ILLUMINAHISEQ_MIRNASEQ_PROBE_STD
-## # <probe_name:string null,
-## # reference_chromosome:string null,
-## # genomic_start:int64 null,
-## # genomic_end:int64 null,
-## # reference_gene_symbols:string null>
-## # [gene_id=0:*,1000000,0,
-## # illuminahiseq_mirnaseq_probe_id=0:*,1000,0]"
-## # 
-## # iquery -anq "remove(mirna_probe_index)"
-## # 
-## # iquery -anq "create array mirna_probe_index
-## # <probe_name:string>
-## # [probe_id=0:*, 1000000,0]"
-
 ##  update mirna_probe_index
 
 iquery -anq "
@@ -403,15 +385,6 @@ store(
  mirna_LOAD_BUF
 )" 
    
- 
-##   # iquery -anq "remove(TCGA_${DATE}_ILLUMNIAHISEQ_MIRNASEQ_STD)"
-##   # iquery -anq "create array
-##   #  TCGA_${DATE}_ILLUMNIAHISEQ_MIRNASEQ_STD
-##   #  <value:double null>
-##   #  [tumor_type_id=0:*,1,0,
-##   #   sample_id=0:*,1000,0,
-##   #   illuminahiseq_mirnaseq_probe_id=0:*,1000,0]"
-
   
 iquery -anq "
 insert(
@@ -462,12 +435,13 @@ insert(
   )
 " 
 
-
+iquery -anq "remove(TCGA_PROBE_LOAD_BUF)"    > /dev/null 2>&1
 iquery -anq "remove(mirna_LOAD_BUF)"    > /dev/null 2>&1
 rm -rf  ${path_downloaded}
 rm ${MIRNAseqFile_rpmm}
 rm ${samplesFile}
 rm ${unsorted_sampleFile}
 rm ${MIRNAseq_geneFile}
+rm ${MIRNAseq_probeFile}
 
 
