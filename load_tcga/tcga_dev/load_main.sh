@@ -40,7 +40,23 @@ exec 2>&1
 #    sample_id=0:*, 1000, 0,
 #    gene_id=0:*,1000000,0]"
 #   
-#    
+#
+
+echo "start mirnaseq loading @: `date`"
+  for tumor_type in `cat tumor_type.tsv`; do
+    bash $1/load_mirna.sh ${DATE} $tumor_type ${current_wd} ${gene_file}
+  done
+echo "finished mirnaseq loading @: `date`"
+
+
+echo "start protein loading @: `date`"
+  for tumor_type in `cat tumor_type.tsv`; do
+    bash $1/load_protein_exp.sh ${DATE} $tumor_type ${current_wd} ${gene_file}
+  done
+echo "finished protein loading @: `date`"
+
+
+    
 #  echo "start RNA seq loading @: `date`"
 #    for tumor_type in `cat tumor_type.tsv`; do
 #      bash $1/load_RNAseq_raw.sh ${DATE} $tumor_type ${current_wd} ${gene_file}

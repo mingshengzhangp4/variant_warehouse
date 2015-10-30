@@ -84,7 +84,7 @@ RNAseqv2 array
     ADAMTS14|140766         75.4803                          123.9804                     ...
     ...........
     
-    ** python code to parse the gene_id to unique gene_symbol **
+    ** python code to parse probe_id to canonical gene name **
         -- script --
           RNAseq_parser.py
     
@@ -149,7 +149,7 @@ A2BP1|54715     36.00   2.52115894577257e-07    uc002cyr.1,uc002cys.2,..    14.0
     ........
 
     
-    ** python code to parse the gene_id to unique gene_symbol **
+    ** python code to parse probe_id to canonical gene name **
         -- script --
           RNAseq_parser_raw.py
     
@@ -553,7 +553,8 @@ update/insert: TCGA_{DATE}_SAMPLE_STD
                 [(gene2.1, start_, end_), (gene2.2, start_, end_), ...],
                      ......
                 [(gene23.1, start_, end_), (gene23.2, start_, end_), ...], # X-chrom
-                [gene24.1, start_, end_), (gene24.2, start_, end_), ...]  # Y-chrom
+                [gene24.1, start_, end_), (gene24.2, start_, end_), ...],  # Y-chrom
+                [gene25.1, start_, end_),(gene25.2, start_, end_), ...]    # MT-chrom
               )
                
       b) sorting the gene list by start_ of each chromosome
@@ -628,4 +629,156 @@ update/insert: TCGA_{DATE}_SAMPLE_STD
       d) insert the same val into each matched genes, step (3)
 
 
-  
+********************************************************************
+********************************************************************
+
+MIRNA array
+
+*********************************************************************
+*********************************************************************
+
+    ** data URL **
+    
+http://gdac.broadinstitute.org/runs/stddata__${DATE}/data/${TUMOR}/${DATE_SHORT}/gdac.broadinstitute.org_${TUMOR}.Merge_protein_exp__mda_rppa_core__mdanderson_org__Level_3__protein_normalization__data.Level_3.${DATE_SHORT}00.0.0.tar.gz
+
+   
+    ** file structure in tar.gz **
+    illumina HiSeqMANIFEST.txt
+    ACC.mirnaseq__illuminahiseq_mirnaseq__bcgsc_ca__Level_3__miR_gene_expression__data.data.txt
+    
+    ** Content **
+    Hybridization REF  TCGA-OR-A5J1-01A-11R-A29W-13  TCGA-OR-A5J1-01A-11R-A29W-13  TCGA-OR-A5J1-01A-11R-A29W-13  TCGA-OR-A5J2-01A-11R-A29W-13 ...
+    miRNA_ID                read_count              reads_per_million_miRNA_mapped       cross-mapped                read_count               ...
+    hsa-let-7a-1             76213                         13484.031491                       N                         45441                 ...
+     .......
+
+   
+    ** python code to parse probe_id to canonical gene name **
+        -- script --
+          MIRNAseq_parser.py
+    
+        --input file --   
+          ACC.mirnaseq__illuminahiseq_mirnaseq__bcgsc_ca__Level_3__miR_gene_expression__data.data.txt
+
+        --output file1 --
+          mirna_probe.tsv
+          [ call gene_symbol_as_geneID.py for map for synonyms to gene_symbol ]
+          miRNA_probe_name miRNA_name canonical_name
+          hsa-let-7a-1      LET7A-1    LET7A-1
+          hsa-mir-551a      MIR551A    MIR551A
+          hsa-mir-222       MIR222     MIR222A  [madeup]
+          hsa-mir-222       MIR222     MIR222B  [madeup]
+          ......
+
+        --output file2 --
+          mirna_data.tsv
+           
+          ** Content **
+        Hybridization REF  TCGA-OR-A5J1-01A-11R-A29W-13   TCGA-OR-A5J2-01A-11R-A29W-13            ...
+        miRNA_ID            reads_per_million_miRNA_mapped      reads_per_million_miRNA_mapped    ...
+        hsa-let-7a-1        13484.031491                              34.234                      ...
+         .......
+
+         
+    
+    ** scidb array schema **
+
+    TCGA_${DATE}_ILLUMINAHISEQ_MIRNASEQ_PROBE_STD
+    <probe_name:string,
+    reference_chromosome:string,
+    genomic_start:int64,
+    genomic_end:int64,
+    reference_gene_symbols:string>
+    [gene_id=0:*,1000000,0,
+    illuminahiseq_mirnaseq_probe_id=0:*,1000,0]
+    
+    TCGA_${DATE}_ILLUMINAHISEQ_MIRNASEQ_STD
+    <value:double null>
+    [tumor_type_id=0:*,1,0,
+     sample_id=0:*,1000,0,
+     illuminahiseq_mirnaseq_probe_id=0:*,1000]"
+
+   
+        **  loading scripts **
+    
+    https://github.com/Paradigm4/variant_warehouse/load_tcga/tcga_dev/load_mirna.sh
+    
+    include-
+    update/insert: TCGA_{DATE}_PATIENT_STD
+    update/insert: TCGA_{DATE}_SAMPLE_STD
+    update/insert: TCGA_{GATE}_GENE_STD
+
+********************************************************************
+********************************************************************
+
+PROTEIN array
+
+*********************************************************************
+*********************************************************************
+
+    ** data URL **
+    
+ wget -nv -P ${path_downloaded}  http://gdac.broadinstitute.org/runs/stddata__${DATE}/data/${TUMOR}/${DATE_SHORT}/gdac.broadinstitute.org_${TUMOR}.Merge_protein_exp__mda_rppa_core__mdanderson_org__Level_3__protein_normalization__data.Level_3.${DATE_SHORT}00.0.0.tar.gz
+    
+    ** file structure in tar.gz **
+    MANIFEST.txt
+    ACC.protein_exp__mda_rppa_core__mdanderson_org__Level_3__protein_normalization__data.data.txt
+    
+    ** Content **
+    Sample REF      TCGA-OR-A5J2-01A-21-A39K-20     TCGA-OR-A5J3-01A-21-A39K-20
+    Composite Element REF   Protein Expression      Protein Expression 
+    14-3-3_beta-R-V 0.22334275225   -0.14206455625
+    14-3-3_epsilon-M-C      -0.0195729252500001     -0.12290085275
+    Acetyl-a-Tubulin-Lys40-R-C      0.0788483787499997      -0.10424065275
+    ADAR1-M-V       0.16202263575   0.05806042625
+    Annexin-1-M-E   0.16743429375   -0.0375481667499998
+    ......
+
+   
+    ** python code to parse probe_id to canonical gene name **
+        -- script --
+          protein_exp_parser.py
+    
+        --input file --   
+         ACC.protein_exp__mda_rppa_core__mdanderson_org__Level_3__protein_normalization__data.data.txt
+         
+        --output file --
+          protein_probe.tsv
+          [ call gene_symbol_as_geneID.py for map for synonyms to gene_symbol ]
+          probe_name       gene_name canonical_name
+          14-3-3_beta-R-V   14-3-3_beta    14-3-3_beta
+          ADAR1-M-V         ADAR1          ADAR1
+          K7-M-E            K7             AK7  [madeup]
+          K7-M-E            K7             AKA  [madeup]
+          ......
+
+         
+    
+    ** scidb array schema **
+
+    TCGA_${DATE}_PROTEIN_EXP_PROBE_STD
+    <probe_name:string,
+    reference_chromosome:string,
+    genomic_start:int64,
+    genomic_end:int64,
+    reference_gene_symbols:string>
+    [gene_id=0:*,1000000,0,
+    protein_exp_probe_id=0:*,1000,0]
+    
+    TCGA_${DATE}_PROTEIN_EXP_STD
+    <value:double null>
+    [tumor_type_id=0:*,1,0,
+     sample_id=0:*,1000,0,
+     protein_exp_probe_id=0:*,1000]"
+
+   
+        **  loading scripts **
+    
+    https://github.com/Paradigm4/variant_warehouse/load_tcga/tcga_dev/load_protein.sh
+    
+    include-
+    update/insert: TCGA_{DATE}_PATIENT_STD
+    update/insert: TCGA_{DATE}_SAMPLE_STD
+    update/insert: TCGA_{GATE}_GENE_STD
+
+

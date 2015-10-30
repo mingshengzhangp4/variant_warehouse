@@ -24,6 +24,12 @@ iquery -anq "remove(TCGA_${DATE}_HUMANMETHYLATION450_PROBE_STD)" > /dev/null 2>&
 iquery -anq "remove(TCGA_${DATE}_HUMANMETHYLATION450_STD)" > /dev/null 2>&1
 iquery -anq "remove(TCGA_${DATE}_GENOME_WIDE_SNP_6_PROBE_STD)" > /dev/null 2>&1
 iquery -anq "remove(TCGA_${DATE}_GENOME_WIDE_SNP_6_STD)" > /dev/null 2>&1
+iquery -anq "remove(TCGA_${DATE}_ILLUMINAHISEQ_MIRNASEQ_PROBE_STD)" > /dev/null 2>&1
+iquery -anq "remove(TCGA_${DATE}_ILLUMINAHISEQ_MIRNASEQ_STD)" > /dev/null 2>&1
+iquery -anq "remove(TCGA_${DATE}_PROTEIN_EXP_PROBE_STD)" > /dev/null 2>&1
+iquery -anq "remove(TCGA_${DATE}_PROTEIN_EXP_STD)" > /dev/null 2>&1
+
+
 
 
 iquery -aq "create array TCGA_${DATE}_TUMOR_TYPE_STD  <tumor_type_name:string> [tumor_type_id=0:*,1,0]"
@@ -116,6 +122,50 @@ iquery -anq "create array
  [tumor_type_id=0:*,1,0,
   sample_id=0:*,1000,0,
   genome_wide_snp_6_probe_id=0:*,1000,0]"
+
+iquery -anq "create array
+TCGA_${DATE}_ILLUMINAHISEQ_MIRNASEQ_PROBE_STD
+<probe_name:string null,
+reference_chromosome:string null,
+genomic_start:int64 null,
+genomic_end:int64 null,
+reference_gene_symbols:string null>
+[gene_id=0:*,1000000,0,
+illuminahiseq_mirnaseq_probe_id=0:*,1000,0]"
+
+iquery -anq "create array
+ TCGA_${DATE}_ILLUMINAHISEQ_MIRNASEQ_STD
+ <value:double null>
+ [tumor_type_id=0:*,1,0,
+  sample_id=0:*,1000,0,
+  illuminahiseq_mirnaseq_probe_id=0:*,1000,0]"
+
+iquery -anq "create array
+TCGA_${DATE}_PROTEIN_EXP_PROBE_STD
+<probe_name:string null,
+reference_chromosome:string null,
+genomic_start:int64 null,
+genomic_end:int64 null,
+reference_gene_symbols:string null>
+[gene_id=0:*,1000000,0,
+protein_exp_probe_id=0:*,1000,0]"
+
+iquery -anq "create array
+ TCGA_${DATE}_PROTEIN_EXP_STD
+ <value:double null>
+ [tumor_type_id=0:*,1,0,
+  sample_id=0:*,1000,0,
+  protein_exp_probe_id=0:*,1000,0]"
+
+iquery -aq "remove(mirna_probe_index)"
+iquery -aq "create array mirna_probe_index"
+<probe_name:string>
+[probe_id=0:*, 1000,0]"
+
+iquery -aq "remove(protein_probe_index)"
+iquery -aq "create array protein_probe_index"
+<probe_name:string>
+[probe_id=0:*, 1000,0]"
 
 
 MYDIR=$1
