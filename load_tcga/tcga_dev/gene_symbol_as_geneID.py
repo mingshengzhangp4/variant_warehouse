@@ -77,11 +77,11 @@ def create_synonym2symbol(inputFile):
         
 if __name__=='__main__':
     
-    inputFile = '/home/scidb/variant_warehouse/load_gene_37/tcga_python_pipe/newGene.tsv'
+    ## inputFile = '/home/scidb/variant_warehouse/load_gene_37/tcga_python_pipe/newGene.tsv'
     ## outputFile = '/home/scidb/variant_warehouse/load_tcga/tcga_dev/gene_symbol_as_id.tsv'
-    ## inputFile = sys.argv[1]
-    ## outputFile = sys.argv[2]
-    ## gene_symbol_geneID_generator(inputFile, outputFile)
+    inputFile = sys.argv[1]
+    outputFile = sys.argv[2]
+    gene_symbol_geneID_generator(inputFile, outputFile)
     gmap = create_synonym2symbol(inputFile)     
-    print gmap
+    # print gmap
 

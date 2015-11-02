@@ -441,4 +441,4 @@ rm ${samplesFile}
 rm ${unsorted_sampleFile}
 rm ${protein_geneFile}
 
-rm ${protein_probeFile}v
+rm ${protein_probeFile}

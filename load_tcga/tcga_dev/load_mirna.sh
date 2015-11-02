@@ -322,9 +322,7 @@ insert(
   mirna_probe_index
   )"
 
-
-  
-  
+ 
 iquery -anq "
 insert(
   redimension(
