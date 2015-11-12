@@ -132,46 +132,51 @@ insert(
     index_lookup(
       apply(
         index_lookup(
-          apply(
+          index_lookup(
             apply(
-              cross_join(
-                uniq(sort(
-                  project(               
-                    filter(
-                      index_lookup(
-                        apply(
-                          input(
-                            <sample_barcode:string> [sampleID=0:*,1000,0],
-                            '${samplesFile}', 0, 'tsv'
-                            ),
-                          sample_name,
-                          substr(sample_barcode, 0,16)
-                          ) as B,
+              apply(
+                cross_join(
+                  uniq(sort(
+                    project(               
+                      filter(
+                        index_lookup(
+                          apply(
+                            input(
+                              <sample_barcode:string> [sampleID=0:*,1000,0],
+                              '${samplesFile}', 0, 'tsv'
+                              ),
+                            sample_name,
+                            substr(sample_barcode, 0,16)
+                            ) as B,
   
-                        redimension(
-                          TCGA_${DATE}_SAMPLE_STD,
-                          <sample_name:string>[sample_id = 0:*,1000,0]
-                          ) as C,
+                          redimension(
+                            TCGA_${DATE}_SAMPLE_STD,
+                            <sample_name:string>[sample_id = 0:*,1000,0]
+                            ) as C,
   
-                        B.sample_name,
-                        sample_id
+                          B.sample_name,
+                          sample_id
+                          ),
+                        sample_id is null
                         ),
-                      sample_id is null
-                      ),
-                    sample_name
+                      sample_name
+                      )
+                    )) as new_samples,
+                  aggregate(
+                    apply(
+                      TCGA_${DATE}_SAMPLE_STD, sample_index, sample_id),
+                    max(sample_index) as max_sid
                     )
-                  )) as new_samples,
-                aggregate(
-                  apply(
-                    TCGA_${DATE}_SAMPLE_STD, sample_index, sample_id),
-                  max(sample_index) as max_sid
-                  )
+                  ),
+                sample_id, iif(max_sid is null, new_samples.i, max_sid+1+new_samples.i)
                 ),
-              sample_id, iif(max_sid is null, new_samples.i, max_sid+1+new_samples.i)
-              ),
-              ttn, '${TUMOR}',
-              sample_type_id, 0
-              ) as D,
+                ttn, '${TUMOR}',
+                sample_code, substr(sample_name,13,2)
+                ) as D,
+              redimension(TCGA_${DATE}_SAMPLE_TYPE_STD, <code:string> [sample_type_id=0:*,1000,0]),
+              D.sample_code,
+              sample_type_id
+              ),             
             TCGA_${DATE}_TUMOR_TYPE_STD,
             D.ttn,
             tumor_type_id

@@ -20,8 +20,8 @@ iquery -anq "remove(TCGA_${DATE}_RNAseqV2_STD)"     > /dev/null 2>&1
 iquery -anq "remove(TCGA_${DATE}_RNAseq_STD)"     > /dev/null 2>&1
 
 
-# iquery -anq "remove(TCGA_${DATE}_HUMANMETHYLATION450_PROBE_STD)" > /dev/null 2>&1
-# iquery -anq "remove(TCGA_${DATE}_HUMANMETHYLATION450_STD)" > /dev/null 2>&1
+iquery -anq "remove(TCGA_${DATE}_HUMANMETHYLATION450_PROBE_STD)" > /dev/null 2>&1
+iquery -anq "remove(TCGA_${DATE}_HUMANMETHYLATION450_STD)" > /dev/null 2>&1
 iquery -anq "remove(TCGA_${DATE}_GENOME_WIDE_SNP_6_PROBE_STD)" > /dev/null 2>&1
 iquery -anq "remove(TCGA_${DATE}_GENOME_WIDE_SNP_6_STD)" > /dev/null 2>&1
 iquery -anq "remove(TCGA_${DATE}_ILLUMINAHISEQ_MIRNASEQ_PROBE_STD)" > /dev/null 2>&1

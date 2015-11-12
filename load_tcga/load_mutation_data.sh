@@ -2,7 +2,7 @@
 
 if [ $# -ne 5 ]; then
  echo "Need 5 arguments:"
- echo "1. Script_path, such as /home/mzhang/Paradigm4_labs/variant_house/load_tcga/tcga_dev"
+ echo "1. Script_path, such as /home/mzhang/Paradigm4_labs/variant_house/load_tcga"
  echo "2. Date, such as 2015_06_01"
  echo "3. Tumor, such as ACC"
  echo "4. cDNA position field, such as 49"
@@ -36,7 +36,6 @@ exit 1
 
 
  tar -zxvf ${path_downloaded}/gdac.broadinstitute.org_${TUMOR}.Mutation_Packager_Calls.Level_3.${DATE_SHORT}00.0.0.tar.gz --directory ${path_downloaded}/
-
 
 ## field map-
 ## $16: Tumor-Sample-Barcode  $1: Hugo-Symbol $4: NCBI_BUILD $6: Start_position $7: End_position
@@ -197,6 +196,8 @@ insert(
   )"
 
 
+ 
+      
 #Insert new samples
 iquery -anq "
 insert(

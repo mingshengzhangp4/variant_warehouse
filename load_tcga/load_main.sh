@@ -3,7 +3,7 @@
  
 if [ $# -ne 3 ]; then
     echo "need three  arguments:"
-    echo "1.  script path,  such as:  /home/scidb/variant_warehouse/load_tcga/tcga_dev"
+    echo "1.  script path,  such as:  /home/scidb/variant_warehouse/load_tcga"
     echo "2.  geneFile, such as: /home/scidb/variant_warehouse/load_gene_37/tcga_python_pipe/newGene.tsv"
     echo "3. Date, such as: 2015_06_01"
     exit 1
@@ -25,6 +25,12 @@ python gene_symbol_as_geneID.py ${gene_file} ${m_gene_file}
 # load gene list 
 bash $1/load_gene.sh ${DATE} ${m_gene_file}
 
+echo "start protein loading @: `date`"
+  for tumor_type in `cat tumor_type.tsv`; do
+    bash $1/load_protein_exp.sh ${DATE} $tumor_type ${current_wd} ${gene_file}
+  done
+echo "finished protein loading @: `date`"
+ 
 echo "start loading mutation data @ `date`"
 bash $1/load_mutation_data.sh $3 $1 ACC 39 40
 bash $1/load_mutation_data.sh $3 $1 BLCA 40 42
@@ -32,12 +38,9 @@ bash $1/load_mutation_data.sh $3 $1 BRCA 49 50
 bash $1/load_mutation_data.sh $3 $1 CESC 49 50
 bash $1/load_mutation_data.sh $3 $1 CHOL 39 40
 bash $1/load_mutation_data.sh $3 $1 COAD 35 36
-bash $1/load_mutation_data.sh $3 $1 COADREAD 35 36
 bash $1/load_mutation_data.sh $3 $1 GBM 40 42
-bash $1/load_mutation_data.sh $3 $1 GBMLGG 40 42
 bash $1/load_mutation_data.sh $3 $1 HNSC 40 42
 bash $1/load_mutation_data.sh $3 $1 KICH 40 42
-bash $1/load_mutation_data.sh $3 $1 KIPAN 39 40
 bash $1/load_mutation_data.sh $3 $1 KIRC 39 40
 bash $1/load_mutation_data.sh $3 $1 KIRP 39 40
 bash $1/load_mutation_data.sh $3 $1 LAML 49 50
@@ -54,8 +57,7 @@ bash $1/load_mutation_data.sh $3 $1 SARC 49 50
 bash $1/load_mutation_data.sh $3 $1 SKCM 40 42
 bash $1/load_mutation_data.sh $3 $1 STAD 40 42
 
-
-bash $1/load_mutation_data.sh $3 $1 TGCT 40 42
+bash $1/load_mutation_data.sh $3 $1 TGCT 39 40
 bash $1/load_mutation_data.sh $3 $1 STES 40 42
 
 
@@ -73,17 +75,13 @@ echo "start mirnaseq loading @: `date`"
 echo "finished mirnaseq loading @: `date`"
 
 
-echo "start protein loading @: `date`"
-  for tumor_type in `cat tumor_type.tsv`; do
-    bash $1/load_protein_exp.sh ${DATE} $tumor_type ${current_wd} ${gene_file}
-  done
-echo "finished protein loading @: `date`"
-  
+ 
 echo "start RNA seq loading @: `date`"
   for tumor_type in `cat tumor_type.tsv`; do
     bash $1/load_RNAseq_raw.sh ${DATE} $tumor_type ${current_wd} ${gene_file}
   done
 echo "finished RNA seq loading @: `date`"
+
 
 echo "start RNA seq loading @: `date`"
   for tumor_type in `cat tumor_type.tsv`; do
