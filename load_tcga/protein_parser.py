@@ -43,8 +43,8 @@ def parsing_protein(protein_file, synonym_canonicalSymbol_map, current_wd):
             del probe_list[-1]
             del probe_list[-1]
         except:
-            print 'exceptional probe name'
-            # raw_input("check...")
+            # print 'exceptional probe name'
+            pass
         gene_name = '-'.join(probe_list)
         gen_list=[item.strip() for item in re.split('_', gene_name)]
         if len(gen_list) > 1:

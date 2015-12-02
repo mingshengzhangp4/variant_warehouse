@@ -25,47 +25,47 @@ python gene_symbol_as_geneID.py ${gene_file} ${m_gene_file}
 # load gene list 
 bash $1/load_gene.sh ${DATE} ${m_gene_file}
 
-echo "start protein loading @: `date`"
-  for tumor_type in `cat tumor_type.tsv`; do
-    bash $1/load_protein_exp.sh ${DATE} $tumor_type ${current_wd} ${gene_file}
-  done
-echo "finished protein loading @: `date`"
+ echo "start protein loading @: `date`"
+   for tumor_type in `cat tumor_type.tsv`; do
+     bash $1/load_protein_exp.sh ${DATE} $tumor_type ${current_wd} ${gene_file}
+   done
+ echo "finished protein loading @: `date`"
+  
+ echo "start loading mutation data @ `date`"
+ bash $1/load_mutation_data.sh $3 $1 ACC 39 40
+ bash $1/load_mutation_data.sh $3 $1 BLCA 40 42
+ bash $1/load_mutation_data.sh $3 $1 BRCA 49 50
+ bash $1/load_mutation_data.sh $3 $1 CESC 49 50
+ bash $1/load_mutation_data.sh $3 $1 CHOL 39 40
+ bash $1/load_mutation_data.sh $3 $1 COAD 35 36
+ bash $1/load_mutation_data.sh $3 $1 GBM 40 42
+ bash $1/load_mutation_data.sh $3 $1 HNSC 40 42
+ bash $1/load_mutation_data.sh $3 $1 KICH 40 42
+ bash $1/load_mutation_data.sh $3 $1 KIRC 39 40
+ bash $1/load_mutation_data.sh $3 $1 KIRP 39 40
+ bash $1/load_mutation_data.sh $3 $1 LAML 49 50
+ bash $1/load_mutation_data.sh $3 $1 LGG 49 50
+ bash $1/load_mutation_data.sh $3 $1 LIHC 39 40
+ bash $1/load_mutation_data.sh $3 $1 LUAD 40 42
+ bash $1/load_mutation_data.sh $3 $1 LUSC 40 42
+ bash $1/load_mutation_data.sh $3 $1 OV 40 42
+ bash $1/load_mutation_data.sh $3 $1 PAAD 40 42
+ bash $1/load_mutation_data.sh $3 $1 PCPG 40 42
+ bash $1/load_mutation_data.sh $3 $1 PRAD 40 42
+ bash $1/load_mutation_data.sh $3 $1 READ 35 36
+ bash $1/load_mutation_data.sh $3 $1 SARC 49 50
+ bash $1/load_mutation_data.sh $3 $1 SKCM 40 42
+ bash $1/load_mutation_data.sh $3 $1 STAD 40 42
  
-echo "start loading mutation data @ `date`"
-bash $1/load_mutation_data.sh $3 $1 ACC 39 40
-bash $1/load_mutation_data.sh $3 $1 BLCA 40 42
-bash $1/load_mutation_data.sh $3 $1 BRCA 49 50
-bash $1/load_mutation_data.sh $3 $1 CESC 49 50
-bash $1/load_mutation_data.sh $3 $1 CHOL 39 40
-bash $1/load_mutation_data.sh $3 $1 COAD 35 36
-bash $1/load_mutation_data.sh $3 $1 GBM 40 42
-bash $1/load_mutation_data.sh $3 $1 HNSC 40 42
-bash $1/load_mutation_data.sh $3 $1 KICH 40 42
-bash $1/load_mutation_data.sh $3 $1 KIRC 39 40
-bash $1/load_mutation_data.sh $3 $1 KIRP 39 40
-bash $1/load_mutation_data.sh $3 $1 LAML 49 50
-bash $1/load_mutation_data.sh $3 $1 LGG 49 50
-bash $1/load_mutation_data.sh $3 $1 LIHC 39 40
-bash $1/load_mutation_data.sh $3 $1 LUAD 40 42
-bash $1/load_mutation_data.sh $3 $1 LUSC 40 42
-bash $1/load_mutation_data.sh $3 $1 OV 40 42
-bash $1/load_mutation_data.sh $3 $1 PAAD 40 42
-bash $1/load_mutation_data.sh $3 $1 PCPG 40 42
-bash $1/load_mutation_data.sh $3 $1 PRAD 40 42
-bash $1/load_mutation_data.sh $3 $1 READ 35 36
-bash $1/load_mutation_data.sh $3 $1 SARC 49 50
-bash $1/load_mutation_data.sh $3 $1 SKCM 40 42
-bash $1/load_mutation_data.sh $3 $1 STAD 40 42
-
-bash $1/load_mutation_data.sh $3 $1 TGCT 39 40
-bash $1/load_mutation_data.sh $3 $1 STES 40 42
-
-
-bash $1/load_mutation_data.sh $3 $1 THCA 40 42
-bash $1/load_mutation_data.sh $3 $1 UCEC 100 38
-bash $1/load_mutation_data.sh $3 $1 UCS 40 42
-bash $1/load_mutation_data.sh $3 $1 UVM 40 42
-echo "finished loading mutation data @`date`"
+ bash $1/load_mutation_data.sh $3 $1 TGCT 39 40
+ bash $1/load_mutation_data.sh $3 $1 STES 40 42
+ 
+ 
+ bash $1/load_mutation_data.sh $3 $1 THCA 40 42
+ bash $1/load_mutation_data.sh $3 $1 UCEC 100 38
+ bash $1/load_mutation_data.sh $3 $1 UCS 40 42
+ bash $1/load_mutation_data.sh $3 $1 UVM 40 42
+ echo "finished loading mutation data @`date`"
 
 
 echo "start mirnaseq loading @: `date`"
@@ -76,38 +76,38 @@ echo "finished mirnaseq loading @: `date`"
 
 
  
-echo "start RNA seq loading @: `date`"
-  for tumor_type in `cat tumor_type.tsv`; do
-    bash $1/load_RNAseq_raw.sh ${DATE} $tumor_type ${current_wd} ${gene_file}
-  done
-echo "finished RNA seq loading @: `date`"
-
-
-echo "start RNA seq loading @: `date`"
-  for tumor_type in `cat tumor_type.tsv`; do
-    bash $1/load_RNAseqV2_v2.sh ${DATE} $tumor_type ${current_wd} ${gene_file}
-  done
-echo "finished RNA v2 seq loading @: `date`"
-
-
-echo "start cnv data loading @ `date`"
-for tumor_type in `cat tumor_type.tsv`; do
-  bash $1/load_cnv.sh $3 $tumor_type $1 $2
-done
-echo "finished loading cnv data @ `date`"
-
-
-echo "start clinical data loading @ `date`"
-for tumor_type in `cat tumor_type.tsv`; do
-  bash $1/load_clinical_data.sh $3 $tumor_type $1
-done
-echo "finished loading clinical data @ `date`"
-
-
-echo "start methylation loading @: `date`"
-  for tumor_type in `cat tumor_type.tsv`; do
-    bash $1/load_methylation.sh $3 $tumor_type $1
-  done
-echo "finished methylation loading @: `date`"
+ echo "start RNA seq loading @: `date`"
+   for tumor_type in `cat tumor_type.tsv`; do
+     bash $1/load_RNAseq_raw.sh ${DATE} $tumor_type ${current_wd} ${gene_file}
+   done
+ echo "finished RNA seq loading @: `date`"
+ 
+ 
+ echo "start RNA seq loading @: `date`"
+   for tumor_type in `cat tumor_type.tsv`; do
+     bash $1/load_RNAseqV2_v2.sh ${DATE} $tumor_type ${current_wd} ${gene_file}
+   done
+ echo "finished RNA v2 seq loading @: `date`"
+ 
+ 
+ echo "start cnv data loading @ `date`"
+ for tumor_type in `cat tumor_type.tsv`; do
+   bash $1/load_cnv.sh $3 $tumor_type $1 $2
+ done
+ echo "finished loading cnv data @ `date`"
+ 
+ 
+ echo "start clinical data loading @ `date`"
+ for tumor_type in `cat tumor_type.tsv`; do
+   bash $1/load_clinical_data.sh $3 $tumor_type $1
+ done
+ echo "finished loading clinical data @ `date`"
+ 
+ 
+ echo "start methylation loading @: `date`"
+   for tumor_type in `cat tumor_type.tsv`; do
+     bash $1/load_methylation.sh $3 $tumor_type $1
+   done
+ echo "finished methylation loading @: `date`"
 
 
