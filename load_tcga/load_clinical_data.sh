@@ -126,8 +126,8 @@ insert(
      unpack(
       filter(
        index_lookup(
-        input(<patient_name:string>[z=0:*,1000000,0], '$MYDIR/patients.tsv', 0, 'tsv') as A,
-        redimension(TCGA_${DATE}_PATIENT_STD, <patient_name:string> [patient_id=0:*,1000000,0]) as B,
+        input(<patient_name:string>[z=0:*,1000,0], '$MYDIR/patients.tsv', 0, 'tsv') as A,
+        redimension(TCGA_${DATE}_PATIENT_STD, <patient_name:string> [patient_id=0:*,1000,0]) as B,
         A.patient_name, 
         pid
        ),
@@ -179,7 +179,7 @@ insert(
        value, C.field,
        ttn, '${TUMOR}'
       ) as E,
-      redimension(TCGA_${DATE}_PATIENT_STD, <patient_name:string> [patient_id=0:*,1000000,0]) as F,
+      redimension(TCGA_${DATE}_PATIENT_STD, <patient_name:string> [patient_id=0:*,1000,0]) as F,
       E.patient_name,
       patient_id
      ) as F,

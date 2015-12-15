@@ -61,7 +61,6 @@ cat ${RNAseqFile} |head -1|awk -F'\t' -v OFS='\n' '{ for (i=2; i<=NF;i++)  print
 
 cat ${RNAseqFile}|awk 'NR>2'|awk -F'\t' -v OFS='\n' '{print $1}'|sort|uniq > ${RNAseq_geneFile}
  
-
 ## update patient array ##
 
 iquery -anq "
@@ -89,13 +88,9 @@ insert(
                           patient_name)
                         )
                       ) as A,
-                    uniq(
-                      sort(
-                        redimension(
-                          TCGA_${DATE}_PATIENT_STD,
-                          <patient_name:string>[patient_id=0:*,1000,0]
-                          )
-                        )
+                      redimension(
+                        TCGA_${DATE}_PATIENT_STD,
+                        <patient_name:string>[patient_id=0:*,1000,0]
                       ) as B,
                     A.patient_name,
                     pat_index
@@ -126,6 +121,7 @@ insert(
     ),
   TCGA_${DATE}_PATIENT_STD
   )"  
+
 
 # update sample array #
 iquery -anq"

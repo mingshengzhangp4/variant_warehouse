@@ -108,7 +108,7 @@ iquery -anq "remove(TCGA_MUTATION_LOAD_BUF)"    > /dev/null 2>&1
               patient_name, 
               substr(sample_, 0, 12)
              ) as A,
-             redimension(TCGA_${DATE}_PATIENT_STD, <patient_name:string> [patient_id=0:*,1000000,0]) as B,
+             redimension(TCGA_${DATE}_PATIENT_STD, <patient_name:string> [patient_id=0:*,1000,0]) as B,
              A.patient_name, 
              pid
            ),
@@ -217,7 +217,7 @@ insert(
               sample_name, 
               substr(sample_, 0, 15)
              ) as A,
-             redimension(TCGA_${DATE}_SAMPLE_STD, <sample_name:string> [sample_id=0:*,1000000,0]) as B,
+             redimension(TCGA_${DATE}_SAMPLE_STD, <sample_name:string> [sample_id=0:*,1000,0]) as B,
              A.sample_name, 
              sid
            ),
@@ -234,11 +234,11 @@ insert(
       patient_name, substr(sample_name, 0, 12),
       sample_code,  substr(sample_name, 13, 2)
      ) as W,
-     redimension(TCGA_${DATE}_SAMPLE_TYPE_STD, <code:string> [sample_type_id=0:*,1000,0]),
+     redimension(TCGA_${DATE}_SAMPLE_TYPE_STD, <code:string> [sample_type_id=0:*,1,0]),
      W.sample_code,
      sample_type_id
     ),
-    redimension(TCGA_${DATE}_PATIENT_STD, <patient_name:string> [patient_id=0:*,1000000,0]),
+    redimension(TCGA_${DATE}_PATIENT_STD, <patient_name:string> [patient_id=0:*,1000,0]),
     W.patient_name, 
     patient_id 
    ),
@@ -273,7 +273,7 @@ insert(
        p_pos_change, p_pos_,
        ttn, '${TUMOR}'
       ) as A,
-      redimension(TCGA_${DATE}_SAMPLE_STD, <sample_name:string> [sample_id=0:*,1000000,0]) as B,
+      redimension(TCGA_${DATE}_SAMPLE_STD, <sample_name:string> [sample_id=0:*,1000,0]) as B,
       A.sample_name,
       sample_id
      ),
@@ -282,7 +282,7 @@ insert(
      tumor_type_id
     ),
     substitute(
-        redimension(TCGA_${DATE}_GENE_STD, <gene_symbol:string null>[gene_id=0:*,10000,0]),
+        redimension(TCGA_${DATE}_GENE_STD, <gene_symbol:string null>[gene_id=0:*,1000000,0]),
         build(<subval:string>[i=0:0,1,0],'_'),
         gene_symbol
     ),

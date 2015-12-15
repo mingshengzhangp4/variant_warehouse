@@ -65,6 +65,12 @@ bash $1/load_gene.sh ${DATE} ${m_gene_file}
  bash $1/load_mutation_data.sh $3 $1 UCEC 100 38
  bash $1/load_mutation_data.sh $3 $1 UCS 40 42
  bash $1/load_mutation_data.sh $3 $1 UVM 40 42
+
+ bash $1/load_mutation_data.sh $3 $1 COADREAD 35 36
+ bash $1/load_mutation_data.sh $3 $1 GBMLGG 40 42
+ bash $1/load_mutation_data.sh $3 $1 KIPAN 39 40
+
+
  echo "finished loading mutation data @`date`"
 
 

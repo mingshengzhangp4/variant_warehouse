@@ -1,3 +1,44 @@
+tumor type info(ACC, BRCA,...):
+
+gdac.broadinstitute.org/runs/stddata__2015_06_01/ingested_data.tsv
+
+
+disease_name map:
+
+gdac.broadinstitute.org/runs/info/tcga_disease_name_map.txt(ACC: Adrenocortical carcinoma, ...)
+gdac.broadinstitute.org/runs/info/clinical(ACC ->[date_of_initial, days_to_death...], BLCA ->[])
+
+
+TCGA barcode
+
+https://wiki.nci.nih.gov/display/TCGA/TCGA+barcode
+
+Code Table report
+
+https://tcga-data.nci.nih.gov/datareports/codeTablesReport.htm?codeTable=Sample%20type
+
+01 Primary solid Tumor TP
+02 Recurrent Solid Tumor TR
+03 Primary Blood Derived Cancer - Peripheral Blood TB
+04 Recurrent Blood Derived Cancer - Bone Marrow TRBM
+05 Additional - New Primary TAP
+06 Metastatic TM
+07 Additional Metastatic TAM
+08 Human Tumor Original Cells THOC
+09 Primary Blood Derived Cancer - Bone Marrow TBM
+10 Blood Derived Normal NB
+11 Solid Tissue Normal NT
+12 Buccal Cell Normal NBC
+13 EBV Immortalized Normal NEBV
+14 Bone Marrow Normal NBM
+20 Control Analyte CELLC
+40 Recurrent Blood Derived Cancer - Peripheral Blood TRB
+50 Cell Lines CELL
+60 Primary Xenograft Tissue XP
+61 Cell Line Derived Xenograft Tissue XCL
+
+
+
 
 
 ********************************************************************

@@ -51,6 +51,10 @@ python cnv_file_parser.py ${input_file} ${gene_file} ${cwd}
 
 ## update patient array ##
 sampleBarCodeFile=${cwd}/cnv_sample_barcodes.txt
+
+
+## update patient array ##
+
 iquery -anq "
 insert(
   redimension(
@@ -67,22 +71,18 @@ insert(
                         project(
                           apply(
                             input(
-                              <sample_barcode:string> [sampleID=0:*,1000,0],
+                              <sample_name:string> [sampleID=0:*,1000,0],
                               '${sampleBarCodeFile}', 0, 'tsv'
                               ),
                             patient_name,
-                            substr(sample_barcode, 0, 12)
+                            substr(sample_name, 0, 12)
                             ),
                           patient_name)
                         )
                       ) as A,
-                    uniq(
-                      sort(
-                        redimension(
-                          TCGA_${DATE}_PATIENT_STD,
-                          <patient_name:string>[patient_id=0:*,1000,0]
-                          )
-                        )
+                      redimension(
+                        TCGA_${DATE}_PATIENT_STD,
+                        <patient_name:string>[patient_id=0:*,1000,0]
                       ) as B,
                     A.patient_name,
                     pat_index
@@ -114,6 +114,8 @@ insert(
   TCGA_${DATE}_PATIENT_STD
   )"  
 
+
+
 # update sample array #
 iquery -anq"
 insert(
@@ -132,7 +134,7 @@ insert(
                           apply(
                             input(
                               <sample_barcode:string> [sampleID=0:*,1000,0],
-                              '${samplesFile}', 0, 'tsv'
+                              '${sampleBarCodeFile}', 0, 'tsv'
                               ),
                             sample_name,
                             substr(sample_barcode, 0,16)

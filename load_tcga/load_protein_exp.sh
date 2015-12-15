@@ -85,13 +85,9 @@ insert(
                           patient_name)
                         )
                       ) as A,
-                    uniq(
-                      sort(
-                        redimension(
-                          TCGA_${DATE}_PATIENT_STD,
-                          <patient_name:string>[patient_id=0:*,1000,0]
-                          )
-                        )
+                      redimension(
+                        TCGA_${DATE}_PATIENT_STD,
+                        <patient_name:string>[patient_id=0:*,1000,0]
                       ) as B,
                     A.patient_name,
                     pat_index
@@ -171,7 +167,7 @@ insert(
                 ttn, '${TUMOR}',
                 sample_code, substr(sample_name,13,2)
                 ) as D,
-              redimension(TCGA_${DATE}_SAMPLE_TYPE_STD, <code:string> [sample_type_id=0:*,1000,0]),
+              redimension(TCGA_${DATE}_SAMPLE_TYPE_STD, <code:string> [sample_type_id=0:*,1,0]),
               D.sample_code,
               sample_type_id
               ),             
