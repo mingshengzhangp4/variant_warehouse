@@ -133,6 +133,40 @@ iquery -anq "remove(TCGA_MUTATION_LOAD_BUF)"    > /dev/null 2>&1
   )"
   
 
+#- then add patient with new tumor-type -#
+iquery -anq "
+  insert(
+    redimension(
+      index_lookup(
+        index_lookup(
+          substitute(
+            apply(  
+              TCGA_MUTATION_LOAD_BUF,
+              patient_name,
+              substr(sample_, 0,12),
+              ttn,
+              '${TUMOR}'
+              ),
+              build(<subval:string>[i=0:0,1,0],'_'),
+              patient_name
+              ) as D,
+          TCGA_${DATE}_TUMOR_TYPE_STD,
+          ttn,
+          tumor_type_id
+          ),
+        redimension(TCGA_${DATE}_PATIENT_STD,
+          <patient_name:string>
+          [patient_id=0:*, 1000, 0]),
+        D.patient_name,
+        patient_id
+        ),
+      TCGA_${DATE}_PATIENT_STD
+      ),
+    TCGA_${DATE}_PATIENT_STD
+    )
+    "
+
+
 #Insert new gene entries we havent seen before
 #Me thinks we need a new gene list
 #Lord this is messy

@@ -117,6 +117,9 @@ store(
  TCGA_CLIN_KEYS
 )"
 
+
+## update new patients ##
+
 iquery -anq "
 insert(
  redimension(
@@ -148,6 +151,40 @@ insert(
  ),
  TCGA_${DATE}_PATIENT_STD
 )"
+
+
+#- then add patient with new tumor-type -#
+iquery -anq "
+  insert(
+    redimension(
+      index_lookup(
+        index_lookup(
+          apply(  
+            input(
+               <sample_name:string> [sampleID=0:*,1000,0],
+               '$MYDIR/patients.tsv', 0, 'tsv'
+               ),
+            patient_name,
+            substr(sample_name, 0,12),
+            ttn,
+            '${TUMOR}'
+            ) as D,
+          TCGA_${DATE}_TUMOR_TYPE_STD,
+          ttn,
+          tumor_type_id
+          ),
+        redimension(TCGA_${DATE}_PATIENT_STD,
+          <patient_name:string>
+          [patient_id=0:*, 1000, 0]),
+        D.patient_name,
+        patient_id
+        ),
+      TCGA_${DATE}_PATIENT_STD
+      ),
+    TCGA_${DATE}_PATIENT_STD
+    )
+    "
+
 
 
 iquery -anq "
