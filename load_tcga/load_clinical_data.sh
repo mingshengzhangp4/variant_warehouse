@@ -18,8 +18,8 @@ DATE_SHORT=`echo $DATE | sed -s "s/_//g"`
 echo $DATE_SHORT
 
 path_downloaded=${cwd}/tcga_download
+rm -rf ${path_downloaded}
 mkdir -p ${path_downloaded}
-
 
 
 #We found sometimes the "merged" file has NA fields where one of the other files has the same fields populated for the same key!!!
@@ -89,19 +89,19 @@ op_count(
  )
 )" | tail -n 1`
 
+
 if [ $MISMATCH_COUNT -ne 0 ]; then
  echo "File column mismatch. Sorry brah!"
  exit 1
 fi
 
-  PATIENTS_LOCATION=`iquery -ocsv -aq "project(unpack(filter(between(TCGA_CLIN_LOAD_BUF, null, null, null, 0, null, null, null, 0), field='patient.bcr_patient_barcode'), z), chunk_number, line_number)" | tail -n 1`
+PATIENTS_LOCATION=`iquery -ocsv -aq "project(unpack(filter(between(TCGA_CLIN_LOAD_BUF, null, null, null, 0, null, null, null, 0), field='patient.bcr_patient_barcode'), z), chunk_number, line_number)" | tail -n 1`
    
-  
 iquery -otsv -aq "between(TCGA_CLIN_LOAD_BUF, 0, $PATIENTS_LOCATION, 1, 0, $PATIENTS_LOCATION, $CLIN_NUM_COLUMNS-1)" | tail -n +2 | sed -e 's/\(.*\)/\U\1/' > $MYDIR/patients.tsv
 
 
 iquery -naq "remove(TCGA_CLIN_KEYS)" > /dev/null 2>&1
-iquery -naq "
+iquery -anq "
 store(
  cast(
   uniq(
@@ -143,7 +143,9 @@ insert(
     ttn, '${TUMOR}',
     patient_id, iif(mpid is null, patient_no, mpid+1+patient_no)
    ),
-   TCGA_${DATE}_TUMOR_TYPE_STD,
+   project(
+     TCGA_${DATE}_TUMOR_TYPE_STD,
+     tumor_type_name),
    ttn,
    tumor_type_id
   ),
@@ -169,7 +171,9 @@ iquery -anq "
             ttn,
             '${TUMOR}'
             ) as D,
-          TCGA_${DATE}_TUMOR_TYPE_STD,
+          project(
+            TCGA_${DATE}_TUMOR_TYPE_STD,
+            tumor_type_name),
           ttn,
           tumor_type_id
           ),
@@ -184,6 +188,9 @@ iquery -anq "
     TCGA_${DATE}_PATIENT_STD
     )
     "
+
+MAX_VERSION=`iquery -ocsv -aq "aggregate(versions(TCGA_${DATE}_PATIENT_STD), max(version_id))"|tail -n 1`
+iquery -anq "remove_versions(TCGA_${DATE}_PATIENT_STD, $MAX_VERSION)"
 
 
 
@@ -220,7 +227,9 @@ insert(
       E.patient_name,
       patient_id
      ) as F,
-     TCGA_${DATE}_TUMOR_TYPE_STD,
+     project(
+       TCGA_${DATE}_TUMOR_TYPE_STD,
+       tumor_type_name),
      F.ttn,
      tumor_type_id
     ) as G,
@@ -238,8 +247,12 @@ insert(
 )"
 
 
-iquery -aq "remove(TCGA_CLIN_KEYS)"
-iquery -aq "remove(TCGA_CLIN_LOAD_BUF)"
+MAX_VERSION=`iquery -ocsv -aq "aggregate(versions(TCGA_${DATE}_CLINICAL_STD), max(version_id))"|tail -n 1`
+iquery -anq "remove_versions(TCGA_${DATE}_CLINICAL_STD, $MAX_VERSION)"
+
+
+iquery -anq "remove(TCGA_CLIN_KEYS)"
+iquery -anq "remove(TCGA_CLIN_LOAD_BUF)"
 rm $MYDIR/patients.tsv
 rm $CLIN_FILE
 rm -rf ${path_downloaded}

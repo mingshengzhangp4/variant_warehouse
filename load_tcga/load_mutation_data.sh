@@ -123,7 +123,9 @@ iquery -anq "remove(TCGA_MUTATION_LOAD_BUF)"    > /dev/null 2>&1
       ttn, '${TUMOR}',
       patient_id, iif(mpid is null, new_patients.i, mpid+1+new_patients.i)
      ),
-     TCGA_${DATE}_TUMOR_TYPE_STD,
+     project(
+       TCGA_${DATE}_TUMOR_TYPE_STD,
+       tumor_type_name),
      ttn,
      tumor_type_id
     ),
@@ -150,7 +152,9 @@ iquery -anq "
               build(<subval:string>[i=0:0,1,0],'_'),
               patient_name
               ) as D,
-          TCGA_${DATE}_TUMOR_TYPE_STD,
+          project(
+            TCGA_${DATE}_TUMOR_TYPE_STD,
+            tumor_type_name),
           ttn,
           tumor_type_id
           ),
@@ -165,6 +169,10 @@ iquery -anq "
     TCGA_${DATE}_PATIENT_STD
     )
     "
+
+
+MAX_VERSION=`iquery -ocsv -aq "aggregate(versions(TCGA_${DATE}_PATIENT_STD), max(version_id))"|tail -n 1`
+iquery -anq "remove_versions(TCGA_${DATE}_PATIENT_STD, $MAX_VERSION)"
 
 
 #Insert new gene entries we havent seen before
@@ -230,6 +238,10 @@ insert(
   )"
 
 
+MAX_VERSION=`iquery -ocsv -aq "aggregate(versions(TCGA_${DATE}_GENE_STD), max(version_id))"|tail -n 1`
+iquery -anq "remove_versions(TCGA_${DATE}_GENE_STD, $MAX_VERSION)"
+
+
  
       
 #Insert new samples
@@ -249,7 +261,7 @@ insert(
              apply(
               TCGA_MUTATION_LOAD_BUF,
               sample_name, 
-              substr(sample_, 0, 15)
+              sample_
              ) as A,
              redimension(TCGA_${DATE}_SAMPLE_STD, <sample_name:string> [sample_id=0:*,1000,0]) as B,
              A.sample_name, 
@@ -276,7 +288,9 @@ insert(
     W.patient_name, 
     patient_id 
    ),
-   TCGA_${DATE}_TUMOR_TYPE_STD,
+   project(
+     TCGA_${DATE}_TUMOR_TYPE_STD,
+     tumor_type_name),
    W.ttn,
    tumor_type_id
   ),
@@ -284,6 +298,65 @@ insert(
  ),
  TCGA_${DATE}_SAMPLE_STD
 )"
+
+
+# then sample with new tumor type #
+iquery -anq "  
+  insert(
+    redimension(  
+      index_lookup(
+        index_lookup(  
+          index_lookup(  
+            index_lookup(
+              apply(
+                substitute(TCGA_MUTATION_LOAD_BUF,
+                  build(<subval:string>[i=0:0,1,0],'_'),
+                  sample_), 
+                patient_name,
+                substr(sample_, 0, 12),
+                sample_name,
+                sample_,
+                sample_code,
+                substr(sample_, 13, 2),
+                ttn,
+                '${TUMOR}'
+                ) as A,
+              redimension(TCGA_${DATE}_PATIENT_STD,
+                <patient_name:string>[patient_id=0:*,1000,0]
+                ),
+              A.patient_name,
+              patient_id
+              ),
+            redimension(TCGA_${DATE}_SAMPLE_STD,
+              <sample_name:string>[sample_id=0:*,1000,0]
+              ),
+            A.sample_name,
+            sample_id
+            ),
+          redimension(TCGA_${DATE}_SAMPLE_TYPE_STD,
+            <code:string>[sample_type_id=0:*,1000,0]
+            ),
+          A.sample_code,
+          sample_type_id
+          ),
+        redimension(TCGA_${DATE}_TUMOR_TYPE_STD,
+          <tumor_type_name:string>[tumor_type_id=0:*, 1000,0]
+          ),
+        A.ttn,
+        tumor_type_id
+        ),
+      TCGA_${DATE}_SAMPLE_STD
+      ),
+    TCGA_${DATE}_SAMPLE_STD
+    )
+  "
+
+
+MAX_VERSION=`iquery -ocsv -aq "aggregate(versions(TCGA_${DATE}_SAMPLE_STD), max(version_id))"|tail -n 1`
+iquery -anq "remove_versions(TCGA_${DATE}_SAMPLE_STD, $MAX_VERSION)"
+
+
+
 
 
 iquery -anq "
@@ -295,7 +368,7 @@ insert(
      index_lookup(
       apply(
        TCGA_MUTATION_LOAD_BUF,
-       sample_name, substr(sample_, 0, 15),
+       sample_name, sample_,
        GRCh_release, release_,
        mutation_genomic_start, dcast(start_, int64(null)),
        mutation_genomic_end,   dcast(end_, int64(null)),
@@ -311,7 +384,9 @@ insert(
       A.sample_name,
       sample_id
      ),
-     TCGA_${DATE}_TUMOR_TYPE_STD,
+     project(
+       TCGA_${DATE}_TUMOR_TYPE_STD,
+       tumor_type_name),
      A.ttn,
      tumor_type_id
     ),
@@ -331,6 +406,10 @@ insert(
 )"
 
  
+MAX_VERSION=`iquery -ocsv -aq "aggregate(versions(TCGA_${DATE}_MUTATION_STD), max(version_id))"|tail -n 1`
+iquery -anq "remove_versions(TCGA_${DATE}_MUTATION_STD, $MAX_VERSION)"
+
+
 iquery -anq "remove(TCGA_MUTATION_LOAD_BUF)"    > /dev/null 2>&1
 rm -f  "${path_downloaded}/${TUMOR}_mutation.tsv"
 rm -rf ${path_downloaded}
