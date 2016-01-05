@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#  geneList_file=/home/mzhang/Paradigm4_labs/variant_warehouse/load_gene_37/newGene.tsv
+#  geneList_file=/home/mzhang/Paradigm4_labs/variant_warehouse/load_tcga/gene_symbol_as_id.tsv
 
 if [ $# -ne 2 ]; then
     echo "need two args:"
     echo "1. DATE, such as 2015_06_01"
     echo "2. geneList_file, such as-"
-    echo "/home/mzhang/Paradigm4_labs/variant_warehouse/load_gene_37/newGene.tsv"
+    echo "/home/mzhang/Paradigm4_labs/variant_warehouse/load_tcga/gene_symbol_as_id.tsv"
     exit 1
 fi
 

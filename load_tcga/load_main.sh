@@ -20,7 +20,14 @@ exec 2>&1
 
 bash  $1/tcga_array_initialization.sh $1
 m_gene_file=$1/gene_symbol_as_id.tsv
-python gene_symbol_as_geneID.py ${gene_file} ${m_gene_file}
+gene_tmp_file1=$1/gene_tmp.tsv
+gene_tmp_file2=$1/gene_tmp2.tsv
+python gene_symbol_as_geneID.py ${gene_file} ${gene_tmp_file} ${gene_tmp_file2} ${m_gene_file}
+
+# rm -f ${gene_tmp_file1}
+# rm -f ${gene_tmp_file2}
+# rm -f ${m_gene_file}
+
 
 # load gene list 
 bash $1/load_gene.sh ${DATE} ${m_gene_file}
