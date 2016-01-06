@@ -35,7 +35,7 @@ DATE="2015_06_01"
  
  iquery -anq "create array TCGA_${DATE}_GENE_STD
  <gene_symbol: string null,
-  entrez_geneID: int64 null,
+  entrez_geneID: string null,
   start_: string null,
   end_: string null,
   strand_: string null,
