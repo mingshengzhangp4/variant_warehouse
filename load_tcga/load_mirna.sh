@@ -333,7 +333,7 @@ insert(
           ),
           gene_id, iif(mgid is null, new_gene.i, mgid+1+new_gene.i)
         ),
-      entrez_geneID, 0, start_, '_', end_, '_',
+      entrez_geneID, '_', start_, '_', end_, '_',
       strand_,'_', hgnc_synonym, '_',synonym,'_',
       dbXrefs,'_', cyto_band,'_', full_name,'_', 
       type_of_gene,'_', chrom,'_', other_locations,'_'

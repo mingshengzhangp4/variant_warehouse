@@ -46,9 +46,10 @@ unsorted_sampleFile=${cwd}/usamples.tsv
 
 protein_geneFile=${cwd}/genes.tsv
 
+new_geneFile=$3/gene_symbol_as_id.tsv
 
 # write ${protein_probeFile}
-python ${cwd}/protein_parser.py ${proteinFile_original} ${gene_file} ${cwd}
+python ${cwd}/protein_parser.py ${proteinFile_original} ${new_geneFile} ${cwd}
 
  
 # output must be one line per sample for 'input' operator to work, thus OFS='\n'
@@ -332,7 +333,7 @@ insert(
           ),
           gene_id, iif(mgid is null, new_gene.i, mgid+1+new_gene.i)
         ),
-      entrez_geneID, 0, start_, '_', end_, '_',
+      entrez_geneID, '_', start_, '_', end_, '_',
       strand_,'_', hgnc_synonym, '_',synonym,'_',
       dbXrefs,'_', cyto_band,'_', full_name,'_', 
       type_of_gene,'_', chrom,'_', other_locations,'_'

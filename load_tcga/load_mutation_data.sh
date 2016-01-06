@@ -219,7 +219,7 @@ insert(
       ),
       gene_symbol, gene_,
       gene_id, iif(mgid is null, new_genes.i, mgid+1+new_genes.i),
-      entrez_geneID, int64(0),
+      entrez_geneID, '_',
       start_, '_',
       end_, '_',
       strand_, '_',

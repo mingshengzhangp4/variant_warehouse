@@ -59,7 +59,7 @@ store(
              chunk_number: int64,
              line_number: int64,
              gene_symbol: string null,
-             entrez_geneID: int64 null,
+             entrez_geneID: string null,
              start_: string null,
              end_: string null,
              strand_: string null,

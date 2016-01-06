@@ -214,7 +214,7 @@ insert(
               filter(
                 index_lookup(
                   input(
-                    <entrez_geneID:int64>[gene_id=0:*,1000000,0], 
+                    <entrez_geneID:string>[gene_id=0:*,1000000,0], 
                     '${Entrez_geneList}',0,'tsv'
                     ) as A,
                   uniq(
@@ -222,10 +222,10 @@ insert(
                       redimension(
                         substitute(
                           TCGA_${DATE}_GENE_STD,
-                          build(<subVal:int64>[i=0:0,1,0],0),
+                          build(<subVal:string>[i=0:0,1,0],'_'),
                           entrez_geneID
                           ),
-                        <entrez_geneID:int64>[gene_id=0:*,1000000,0]
+                        <entrez_geneID:string>[gene_id=0:*,1000000,0]
                         )
                       )
                     ) as B,
@@ -349,7 +349,7 @@ insert(
                 ) as VW,
               substitute(
                 project(TCGA_${DATE}_GENE_STD,entrez_geneID),
-                build(<subVal:int64>[i=0:0,1,0],0),
+                build(<subVal:string>[i=0:0,1,0],'_'),
                 entrez_geneID
                 ),
               VW.entrez_geneID,
