@@ -1,7 +1,7 @@
 import re, sys
 
 
-def gene_symbol_geneID_generator(inputFile, outputFile):
+def gene_symbol_geneID_generator(inputFile, outputFile_tmp):
     '''
     genenate gene list with gene_symbol as unique geneID
 
@@ -32,7 +32,7 @@ def gene_symbol_geneID_generator(inputFile, outputFile):
            symbol_map[g_symbol] = [new_entrez_id] + alist[2:]
     fin.close()
 
-    fout = open(outputFile,'w')
+    fout = open(outputFile_tmp,'w')
     fout.write(headerLine)
     for aterm in symbol_map:
         wlist = [aterm] + symbol_map[aterm]
@@ -40,9 +40,9 @@ def gene_symbol_geneID_generator(inputFile, outputFile):
     fout.close()
 
 
-def create_synonym2symbol(inputFile):
+def expand_synonyms(inputFile_tmp, outputFile):
     '''
-    genenate a python dict mapping synonym to gene_symbols (one to one or one to many)
+    expand synonyms, one synonym per line
 
     @para inputFile: input tsv file with fields, which hgnc_symbol:entrez_geneID may be many-one-
         hgnc_symbol	entrez_geneID	Start	End	Strand	hgnc_synonym
@@ -51,12 +51,19 @@ def create_synonym2symbol(inputFile):
         ABL1            25         133589268    133763062  +    JTK7, c-ABL, p150
         ABL|JTK7|bcr/abl|c-ABL|c-ABL1|p150|v-abl  MIM:189980|HGNC:HGNC:76|Ensembl:ENSG00000097007|HPRD:01809|Vega:OTTHUMG00000020813
         9q34.1  ABL proto-oncogene 1, non-receptor tyrosine kinase      protein-coding  9       _
-    @ return dict: 
-        {syn0:[symbol0_0, symbol0_1, ...], syn1:[symbol1_0, symbol1_1, ...], ...,  ....}
+    @para outputFile: writing out expanded synonyms of gene, one line per synonym
+        gene0_syn0 entrezID Start...
+        gene0_syn1 entrezID Start...
+        ...
+        geneN_syn0 entrezID Start ...
+        ...
+    @para return:none
+
     '''
-    fin = open(inputFile, 'r')
+    fin = open(inputFile_tmp, 'r')
+    fout = open(outputFile, 'w')
     headerLine = fin.next()
-    synonym2symbol = {}
+    fout.write(headerLine)
     for aline in fin:
        alist=[item.strip() for item in re.split('\t', aline)]
        g_symbol = alist[0]
@@ -67,21 +74,129 @@ def create_synonym2symbol(inputFile):
        if '_' in syns: syns.remove('_')
        if '-' in syns: syns.remove('-')
        for s in syns:
+          alist[0] = s
+          hgnc_synonym = "|".join(list(syns))
+          alist[5] = hgnc_synonym
+          newLine = '\t'.join(alist) + '\n'
+          fout.write(newLine)
+    fin.close()
+    fout.close()
+
+def resolve_gene_symbol_collision(inputFile_with_collision, outputFile):
+    '''
+    collapse collided symbols into a single line
+
+    @para inputFile: input tsv file with fields, which hgnc_symbol:entrez_geneID may be many-one-
+        hgnc_symbol	entrez_geneID	Start	End	Strand	hgnc_synonym
+	ncbi_synonym	dbXrefs	cyto_band	full_name	Type_of_gene
+ 	chromosome	other_locations
+        ABL1            25         133589268    133763062  +    JTK7, c-ABL, p150
+        ABL|JTK7|bcr/abl|c-ABL|c-ABL1|p150|v-abl  MIM:189980|HGNC:HGNC:76|Ensembl:ENSG00000097007|HPRD:01809|Vega:OTTHUMG00000020813
+        9q34.1  ABL proto-oncogene 1, non-receptor tyrosine kinase      protein-coding  9       _
+    @para outputFile: in case that one symbols mapped to different gene identity, collapsed them into one line
+        gene0_syn0 entrezID Start...
+        gene0_syn1 entrezID Start...
+        ...
+        geneN_syn0 entrezID Start ...
+        ...
+        symbol_c0  entrizID0&entrizID1 Start End Strand syn_0|syn_1..&syn_0|syn_1 ncbi_synonym ...
+        symbol_c1 ...
+    @para return:none
+
+    '''
+    fin=open(inputFile_with_collision, 'r')
+    fout=open(outputFile, 'w')
+    headerLine=fin.next()
+    fout.write(headerLine)
+
+    all_symbols = []
+    collided_symbols=[]
+    #line_no = 0
+    for aline in fin:
+        #line_no += 1
+        #print line_no
+        alist = [item.strip() for item in re.split('\t', aline)]
+        symb = alist[0]
+        if not symb in all_symbols:
+            all_symbols.append(symb)
+        else:
+            #print "collision occurred!" 
+            if not symb in collided_symbols:
+                collided_symbols.append(symb)
+    fin.seek(0)
+    fin.next()
+    for aline in fin:
+        alist=[item.strip() for item in re.split('\t', aline)]
+        if not alist[0] in collided_symbols:
+            fout.write(aline)
+
+    fin.seek(0)
+    fin.next()
+    coll_dict = {} ## {symbol0:[[entrezID1, ...], [hgnc_synonym1, ...]], symbol1:[[],[]], ....}
+    for aline in fin:
+        alist=[item.strip() for item in re.split('\t', aline)]
+        s = alist[0]
+        if s in collided_symbols:
+            entrezID = alist[1]
+            hgnc_synonyms = alist[5]
+            if not s in coll_dict:
+                coll_dict[s] = [[entrezID], [hgnc_synonyms]]
+            else:
+                coll_dict[s][0].append(entrezID)
+                coll_dict[s][1].append(hgnc_synonyms)
+    for sy in coll_dict:
+        newLine_backbone = [item.strip() for item in re.split('\t', headerLine)]
+        entrezList = coll_dict[sy][0]
+        syn_list = coll_dict[sy][1]
+        newLine_backbone[0] = sy
+        newLine_backbone[1] = '&'.join(entrezList)
+        newLine_backbone[5] = '&'.join(syn_list)
+        newLine = '\t'.join(newLine_backbone) + '\n'
+        fout.write(newLine)
+ 
+    fin.close()
+    fout.close()
+    
+def create_synonym2symbol(inputFile):
+    '''
+    genenate a python dict mapping synonym to gene_symbols (one to one or one to many)
+    @para inputFile: output text file from function resolve_gene_symbol_collision(inputFile_with_collision, outputFile)
+        gene0_syn0 entrezID Start...
+        gene0_syn1 entrezID Start...
+        ...
+        geneN_syn0 entrezID Start ...
+        ...
+        symbol_c0  entrizID0&entrizID1 Start End Strand syn_0|syn_1..&syn_0|syn_1 ncbi_synonym ...
+        symbol_c1 ...
+    @ return dict:
+        {syn0:[symbol0_0, symbol0_1, ...], syn1:[symbol1_0, symbol1_1, ...], ...,  ....}
+    '''
+    fin = open(inputFile, 'r')
+    headerLine = fin.next()
+    synonym2symbol = {}
+    for aline in fin:
+       alist=[item.strip() for item in re.split('\t', aline)]
+       g_symbol = alist[0]
+       syns = [item.strip().upper() for item in re.split(',|\||&', alist[5])]
+       for s in syns:
           if not s in synonym2symbol:
               synonym2symbol[s] = [g_symbol]
           else:
               # print "name collision."
               synonym2symbol[s].append(g_symbol)
     fin.close()
-    return synonym2symbol
-        
+    return synonym2symbol       
 if __name__=='__main__':
     
-    ## inputFile = '/home/scidb/variant_warehouse/load_gene_37/tcga_python_pipe/newGene.tsv'
-    ## outputFile = '/home/scidb/variant_warehouse/load_tcga/tcga_dev/gene_symbol_as_id.tsv'
+    #  inputFile = '/home/scidb/mzhang/variant_warehouse/load_gene_37/tcga_python_pipe/newGene.tsv'
+    #  outputFile_tmp = '/home/scidb/mzhang/variant_warehouse/load_tcga/gene_tmp.tsv'
+    #  outputFile_tmp2 = '/home/scidb/mzhang/variant_warehouse/load_tcga/gene_tmp2.tsv'   
+    #  outputFile = '/home/scidb/mzhang/variant_warehouse/load_tcga/gene_symbol_as_id.tsv'
     inputFile = sys.argv[1]
-    outputFile = sys.argv[2]
-    gene_symbol_geneID_generator(inputFile, outputFile)
-    gmap = create_synonym2symbol(inputFile)     
-    # print gmap
+    outputFile_tmp = sys.argv[2]
+    outputFile_tmp2 = sys.argv[3]
+    outputFile = sys.argv[4]
+    gene_symbol_geneID_generator(inputFile, outputFile_tmp)
+    expand_synonyms(outputFile_tmp, outputFile_tmp2)
+    resolve_gene_symbol_collision(outputFile_tmp2, outputFile)
 

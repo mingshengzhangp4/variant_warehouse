@@ -32,10 +32,10 @@ DATE="2015_06_01"
  
  
  
- iquery -aq "create array TCGA_${DATE}_TUMOR_TYPE_STD  <tumor_type_name:string> [tumor_type_id=0:*,1,0]"
- iquery -aq "create array TCGA_${DATE}_SAMPLE_TYPE_STD <code:string,definition:string,short_letter_code:string> [sample_type_id=0:*,1,0]"
- iquery -aq "create array TCGA_${DATE}_SAMPLE_STD <sample_name:string> [tumor_type_id=0:*,1,0, patient_id=0:*,1000,0, sample_type_id=0:*,1,0,sample_id=0:*,1000,0]"
- iquery -aq "create array TCGA_${DATE}_PATIENT_STD  <patient_name:string> [tumor_type_id=0:*,1,0,patient_id=0:*,1000,0]"
+ iquery -aq "create array TCGA_${DATE}_TUMOR_TYPE_STD  <tumor_type_name:string, full_name:string> [tumor_type_id=0:*,1000000,0]"
+ iquery -aq "create array TCGA_${DATE}_SAMPLE_TYPE_STD <code:string,definition:string,short_letter_code:string> [sample_type_id=0:*,1000000,0]"
+ iquery -aq "create array TCGA_${DATE}_SAMPLE_STD <sample_name:string> [tumor_type_id=0:*,1000000,0, patient_id=0:*,1000,0, sample_type_id=0:*,1000000,0,sample_id=0:*,1000,0]"
+ iquery -aq "create array TCGA_${DATE}_PATIENT_STD  <patient_name:string> [tumor_type_id=0:*,1000000,0,patient_id=0:*,1000,0]"
 
 
 
@@ -43,7 +43,7 @@ DATE="2015_06_01"
  
  iquery -anq "create array TCGA_${DATE}_GENE_STD
  <gene_symbol: string null,
-  entrez_geneID: int64 null,
+  entrez_geneID: string null,
   start_: string null,
   end_: string null,
   strand_: string null,
@@ -188,6 +188,6 @@ iquery -anq "create array
  
  MYDIR=$1
  iquery -anq "load(TCGA_${DATE}_SAMPLE_TYPE_STD, '$MYDIR/sample_type.tsv', 0, 'tsv')"
- iquery -anq "load(TCGA_${DATE}_TUMOR_TYPE_STD, '$MYDIR/tumor_type.tsv', 0, 'tsv')"
+ iquery -anq "load(TCGA_${DATE}_TUMOR_TYPE_STD, '$MYDIR/tumor_type_input.txt', 0, 'tsv')"
 
 

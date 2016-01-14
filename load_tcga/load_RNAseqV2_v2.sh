@@ -113,7 +113,9 @@ insert(
         ttn, '${TUMOR}',
         patient_id, iif(mpid is null, new_patients.i, mpid+1+new_patients.i)
         ),
-      TCGA_${DATE}_TUMOR_TYPE_STD,
+      project(
+        TCGA_${DATE}_TUMOR_TYPE_STD,
+        tumor_type_name),
       ttn,
       tumor_type_id
       ),
@@ -138,7 +140,9 @@ iquery -anq "
             ttn,
             '${TUMOR}'
             ) as D,
-          TCGA_${DATE}_TUMOR_TYPE_STD,
+          project(
+            TCGA_${DATE}_TUMOR_TYPE_STD,
+            tumor_type_name),
           ttn,
           tumor_type_id
           ),
@@ -153,6 +157,10 @@ iquery -anq "
     TCGA_${DATE}_PATIENT_STD
     )
     "
+
+MAX_VERSION=`iquery -ocsv -aq "aggregate(versions(TCGA_${DATE}_PATIENT_STD), max(version_id))"|tail -n 1`
+iquery -anq "remove_versions(TCGA_${DATE}_PATIENT_STD, $MAX_VERSION)"
+
 
 
 # update sample array #
@@ -175,7 +183,7 @@ insert(
                             '${samplesFile}', 0, 'tsv'
                             ),
                           sample_name,
-                          substr(sample_barcode, 0,16)
+                          sample_barcode
                           ) as B,
   
                         redimension(
@@ -202,7 +210,9 @@ insert(
               ttn, '${TUMOR}',
               sample_type_id, 0
               ) as D,
-            TCGA_${DATE}_TUMOR_TYPE_STD,
+            project(
+              TCGA_${DATE}_TUMOR_TYPE_STD,
+              tumor_type_name),
             D.ttn,
             tumor_type_id
             ),
@@ -221,6 +231,62 @@ insert(
   TCGA_${DATE}_SAMPLE_STD
   )"
     
+# then sample with new tumor type #
+iquery -anq "  
+  insert(
+    redimension(  
+      index_lookup(
+        index_lookup(  
+          index_lookup(  
+            index_lookup(
+              apply(
+                input(
+                  <sample_barcode:string> [sampleID=0:*,1000,0],
+                  '${samplesFile}', 0, 'tsv'
+                  ),
+                patient_name,
+                substr(sample_barcode, 0, 12),
+                sample_name,
+                sample_barcode,
+                sample_code,
+                substr(sample_barcode, 13, 2),
+                ttn,
+                '${TUMOR}'
+                ) as A,
+              redimension(TCGA_${DATE}_PATIENT_STD,
+                <patient_name:string>[patient_id=0:*,1000,0]
+                ),
+              A.patient_name,
+              patient_id
+              ),
+            redimension(TCGA_${DATE}_SAMPLE_STD,
+              <sample_name:string>[sample_id=0:*,1000,0]
+              ),
+            A.sample_name,
+            sample_id
+            ),
+          redimension(TCGA_${DATE}_SAMPLE_TYPE_STD,
+            <code:string>[sample_type_id=0:*,1000,0]
+            ),
+          A.sample_code,
+          sample_type_id
+          ),
+        redimension(TCGA_${DATE}_TUMOR_TYPE_STD,
+          <tumor_type_name:string>[tumor_type_id=0:*, 1000,0]
+          ),
+        A.ttn,
+        tumor_type_id
+        ),
+      TCGA_${DATE}_SAMPLE_STD
+      ),
+    TCGA_${DATE}_SAMPLE_STD
+    )
+  "
+
+
+MAX_VERSION=`iquery -ocsv -aq "aggregate(versions(TCGA_${DATE}_SAMPLE_STD), max(version_id))"|tail -n 1`
+iquery -anq "remove_versions(TCGA_${DATE}_SAMPLE_STD, $MAX_VERSION)"
+
 
 ##  update gene list ##
 iquery -anq "
@@ -264,7 +330,7 @@ insert(
           ),
           gene_id, iif(mgid is null, new_gene.i, mgid+1+new_gene.i)
         ),
-      entrez_geneID, 0, start_, '_', end_, '_',
+      entrez_geneID, '_', start_, '_', end_, '_',
       strand_,'_', hgnc_synonym, '_',synonym,'_',
       dbXrefs,'_', cyto_band,'_', full_name,'_', 
       type_of_gene,'_', chrom,'_', other_locations,'_'
@@ -272,6 +338,10 @@ insert(
     TCGA_${DATE}_GENE_STD
     ),
 TCGA_${DATE}_GENE_STD)"
+
+MAX_VERSION=`iquery -ocsv -aq "aggregate(versions(TCGA_${DATE}_GENE_STD), max(version_id))"|tail -n 1`
+iquery -anq "remove_versions(TCGA_${DATE}_GENE_STD, $MAX_VERSION)"
+
 
 column_no=`cat ${RNAseqFile}|awk -F'\t' '{print NF}' |head -n 1|awk '{print $1}'`
      
@@ -330,11 +400,13 @@ insert(
               MA.chunk_number, G.chunk_number
               ),
             ttn, '${TUMOR}',
-            sample_name, substr(S.sample_barcode, 0,16),
+            sample_name, S.sample_barcode,
             gene_symbol, G.expression,
             RNA_expressionLevel, dcast(MA.expression,double(null))
             ) as Q,
-          TCGA_${DATE}_TUMOR_TYPE_STD,
+          project(
+            TCGA_${DATE}_TUMOR_TYPE_STD,
+            tumor_type_name),
           ttn,
           tumor_type_id
           ),
@@ -361,6 +433,10 @@ insert(
 TCGA_${DATE}_RNAseqV2_STD)
 "
  
+MAX_VERSION=`iquery -ocsv -aq "aggregate(versions(TCGA_${DATE}_RNAseqV2_STD), max(version_id))"|tail -n 1`
+iquery -anq "remove_versions(TCGA_${DATE}_RNAseqV2_STD, $MAX_VERSION)"
+
+
 
 iquery -anq "remove(TCGA_RNAseq_LOAD_BUF)"    > /dev/null 2>&1
 rm -rf  ${path_downloaded}

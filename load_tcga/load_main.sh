@@ -20,7 +20,14 @@ exec 2>&1
 
 bash  $1/tcga_array_initialization.sh $1
 m_gene_file=$1/gene_symbol_as_id.tsv
-python gene_symbol_as_geneID.py ${gene_file} ${m_gene_file}
+gene_tmp_file1=$1/gene_tmp.tsv
+gene_tmp_file2=$1/gene_tmp2.tsv
+python gene_symbol_as_geneID.py ${gene_file} ${gene_tmp_file1} ${gene_tmp_file2} ${m_gene_file}
+
+# rm -f ${gene_tmp_file1}
+# rm -f ${gene_tmp_file2}
+# rm -f ${m_gene_file}
+
 
 # load gene list 
 bash $1/load_gene.sh ${DATE} ${m_gene_file}
@@ -30,7 +37,7 @@ echo "start protein loading @: `date`"
     bash $1/load_protein_exp.sh ${DATE} $tumor_type ${current_wd} ${gene_file}
   done
 echo "finished protein loading @: `date`"
-  
+
 echo "start loading mutation data @ `date`"
 bash $1/load_mutation_data.sh $3 $1 ACC 39 40
 bash $1/load_mutation_data.sh $3 $1 BLCA 40 42
@@ -84,28 +91,28 @@ echo "start mirnaseq loading @: `date`"
 echo "finished mirnaseq loading @: `date`"
 
 
- 
+
 echo "start RNA seq loading @: `date`"
   for tumor_type in `cat tumor_type.tsv`; do
     bash $1/load_RNAseq_raw.sh ${DATE} $tumor_type ${current_wd} ${gene_file}
   done
 echo "finished RNA seq loading @: `date`"
- 
- 
+
+
 echo "start RNA seq loading @: `date`"
   for tumor_type in `cat tumor_type.tsv`; do
     bash $1/load_RNAseqV2_v2.sh ${DATE} $tumor_type ${current_wd} ${gene_file}
   done
 echo "finished RNA v2 seq loading @: `date`"
- 
- 
+
+
 echo "start cnv data loading @ `date`"
 for tumor_type in `cat tumor_type.tsv`; do
   bash $1/load_cnv.sh $3 $tumor_type $1 $2
 done
 echo "finished loading cnv data @ `date`"
- 
- 
+
+
 echo "start clinical data loading @ `date`"
 for tumor_type in `cat tumor_type.tsv`; do
   bash $1/load_clinical_data.sh $3 $tumor_type $1
