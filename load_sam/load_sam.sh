@@ -13,7 +13,7 @@
 
 #  iquery -anq "remove(sam_array)" >/dev/null 2>&1
 #  
-#  iquery -aq "create array sam_array <qname:string,flag:int64 null,rname:string null,pos:int64 null,mapq:int64 null,cigr:string null,rnext:string null,pnext:int64 null,tlen:int64 null,seq:string null compression 'zlib',qual:string null compression 'zlib',rg:string null> [q_no=0:*,10000000,0]"
+#  iquery -aq "create array sam_array <qname:string,flag:int64 null,rname:string null,pos:int64 null,mapq:int64 null,cigr:string null,rnext:string null,pnext:int64 null,tlen:int64 null,seq:string null compression 'zlib',qual:string null compression 'zlib',rg:string null> [q_no=0:*,100000,0]"
 #  
 #  
 #  
@@ -77,53 +77,18 @@ rnext: string null,
 pnext: int64 null,
 tlen: int64 null,
 rg: string null,
-base: string null,
-base_qual: string null>
-[q_no=0:*, 10000000,0,
- base_index_in_read=0:27, 28, 0,
- coord =0:*, 1000000,0]"
+base: char null,
+base_qual: char null>
+[q_no=0:*, 1000000,0,
+coord =0:*, 10000000,0
+]"
 
-iquery -anq "
-  consume(
-    project(
-      apply(
-        apply(
-          cross_join(
-            sam_array,
-            build(<pos_in_read:int64>[base_index_in_read=0:27,28,0], base_index_in_read)
-            ),
-          sgnd_pos_in_read, iif(tlen>0, pos_in_read, -pos_in_read),
-          base,
-          iif(pos_in_read > strlen(seq)-1, null, substr(seq, pos_in_read, 1)),
-          base_qual,
-          iif(pos_in_read > strlen(seq)-1, null, substr(qual, pos_in_read, 1))
-          ),
-        coord,
-        pos + sgnd_pos_in_read),
-      qname,
-      flag,
-      rname,
-      mapq,
-      cigr,
-      rnext,
-      pnext,
-      tlen,
-      rg,
-      coord,
-      base,
-      base_qual
-      )
-  )"
-
-
-
-
-
-
+#[q_no=0:*, 10000000,0,
+# base_index_in_read=0:27, 28, 0,
+# coord =0:*, 1000000,0]"
 
 #  iquery -anq "
-#  insert(
-#    redimension(
+#    consume(
 #      project(
 #        apply(
 #          apply(
@@ -151,11 +116,50 @@ iquery -anq "
 #        coord,
 #        base,
 #        base_qual
-#        ),
-#      sam_pileup
-#      ),
-#    sam_pileup
-#  
+#        )
 #    )"
+
+
+
+
+
+
+
+iquery -anq "
+insert(
+  redimension(
+    project(
+      apply(
+        apply(
+          cross_join(
+            sam_array,
+            build(<pos_in_read:int64>[base_index_in_read=0:27,28,0], base_index_in_read)
+            ),
+          sgnd_pos_in_read, iif(tlen>0, pos_in_read, -pos_in_read),
+          base,
+          iif(pos_in_read > strlen(seq)-1, null, char(substr(seq, pos_in_read, 1))),
+          base_qual,
+          iif(pos_in_read > strlen(seq)-1, null, char(substr(qual, pos_in_read, 1)))
+          ),
+        coord,
+        pos + sgnd_pos_in_read),
+      qname,
+      flag,
+      rname,
+      mapq,
+      cigr,
+      rnext,
+      pnext,
+      tlen,
+      rg,
+      coord,
+      base,
+      base_qual
+      ),
+    sam_pileup
+    ),
+  sam_pileup
+
+  )"
 
 
