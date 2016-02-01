@@ -12,8 +12,8 @@
 #  iquery -anq "store(aio_input('/home/scidb/mzhang/cp_file/cg.sam', 'num_attributes=12'), sam_tmp)"
 
 #  iquery -anq "remove(sam_array)" >/dev/null 2>&1
-#  
-#  iquery -aq "create array sam_array <qname:string,flag:int64 null,rname:string null,pos:int64 null,mapq:int64 null,cigr:string null,rnext:string null,pnext:int64 null,tlen:int64 null,seq:string null compression 'zlib',qual:string null compression 'zlib',rg:string null> [q_no=0:*,100000,0]"
+#    
+#  iquery -aq "create array sam_array <qname:string compression 'zlib', flag:int64 null,rname:string null,pos:int64 null,mapq:int64 null,cigr:string null,rnext:string null,pnext:int64 null,tlen:int64 null,seq:string null compression 'zlib',qual:string null compression 'zlib',rg:string null> [q_no=0:*,1000000,0]"
 #  
 #  
 #  
@@ -62,13 +62,13 @@
 #      ),
 #    sam_array)"
  
-# iquery -anq "store(between(sam_array, 0, 10000000), work_array)"
+#  # iquery -anq "store(between(sam_array, 0, 10000000), work_array)"
 
 iquery -anq "remove(sam_pileup)"
 
 iquery -aq "create array sam_pileup
 <
-qname: string,
+qname: string compression 'zlib',
 flag: int64 null,
 rname: string null,
 mapq: int64 null,
@@ -80,51 +80,51 @@ rg: string null,
 base: char null,
 base_qual: char null>
 [q_no=0:*, 1000000,0,
-coord =0:*, 10000000,0
+coord =0:*, 10000000000,0
 ]"
 
-#[q_no=0:*, 10000000,0,
-# base_index_in_read=0:27, 28, 0,
-# coord =0:*, 1000000,0]"
-
-#  iquery -anq "
-#    consume(
-#      project(
-#        apply(
-#          apply(
-#            cross_join(
-#              sam_array,
-#              build(<pos_in_read:int64>[base_index_in_read=0:27,28,0], base_index_in_read)
-#              ),
-#            sgnd_pos_in_read, iif(tlen>0, pos_in_read, -pos_in_read),
-#            base,
-#            iif(pos_in_read > strlen(seq)-1, null, substr(seq, pos_in_read, 1)),
-#            base_qual,
-#            iif(pos_in_read > strlen(seq)-1, null, substr(qual, pos_in_read, 1))
-#            ),
-#          coord,
-#          pos + sgnd_pos_in_read),
-#        qname,
-#        flag,
-#        rname,
-#        mapq,
-#        cigr,
-#        rnext,
-#        pnext,
-#        tlen,
-#        rg,
-#        coord,
-#        base,
-#        base_qual
-#        )
-#    )"
-
-
-
-
-
-
-
+#  #[q_no=0:*, 10000000,0,
+#  # base_index_in_read=0:27, 28, 0,
+#  # coord =0:*, 1000000,0]"
+#  
+#  #  iquery -anq "
+#  #    consume(
+#  #      project(
+#  #        apply(
+#  #          apply(
+#  #            cross_join(
+#  #              sam_array,
+#  #              build(<pos_in_read:int64>[base_index_in_read=0:27,28,0], base_index_in_read)
+#  #              ),
+#  #            sgnd_pos_in_read, iif(tlen>0, pos_in_read, -pos_in_read),
+#  #            base,
+#  #            iif(pos_in_read > strlen(seq)-1, null, substr(seq, pos_in_read, 1)),
+#  #            base_qual,
+#  #            iif(pos_in_read > strlen(seq)-1, null, substr(qual, pos_in_read, 1))
+#  #            ),
+#  #          coord,
+#  #          pos + sgnd_pos_in_read),
+#  #        qname,
+#  #        flag,
+#  #        rname,
+#  #        mapq,
+#  #        cigr,
+#  #        rnext,
+#  #        pnext,
+#  #        tlen,
+#  #        rg,
+#  #        coord,
+#  #        base,
+#  #        base_qual
+#  #        )
+#  #    )"
+#  
+#  
+#  
+#  
+#  
+#  
+#  
 iquery -anq "
 insert(
   redimension(
