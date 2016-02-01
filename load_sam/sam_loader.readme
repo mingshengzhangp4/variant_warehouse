@@ -1,10 +1,10 @@
 
 
---- transfer the bam file from CG to paradigm4 ftp servers ---
+--- transfer the bam file from clientXX to paradigm4 ftp servers ---
 
-a key file is provided to CG: id_storage
+a key file is provided to clientXX: id_storage
 
-transfer is initiated at CG:
+transfer is initiated at clientXX:
 
 [sciotlos@lx-research05 P4_bam] $ scp -i id_storage ./GS000038929-ASM.normal.sort.bam
  storage@access.paradigm4.com
